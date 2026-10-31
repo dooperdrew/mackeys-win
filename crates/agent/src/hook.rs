@@ -7,17 +7,17 @@
 //! - `docs/hardware-findings.md` §4.1: ISO Italian `AltGr` synthetic `sc=0x21D` Left Control suppression.
 
 use std::sync::Mutex;
-use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicIsize, AtomicPtr, AtomicU32, Ordering};
 
 use magicbridge_core::CompiledMappingTable;
 use magicbridge_core::engine::RemapAction;
 use magicbridge_core::key::{
-    Key, MAGICBRIDGE_EXTRA_INFO, SC_ISO_ALTGR_SYNTHETIC_LCTRL, VK_LCONTROL,
+    Key, MAGICBRIDGE_EXTRA_INFO, SC_ISO_ALTGR_SYNTHETIC_LCTRL, VK_ESCAPE, VK_LCONTROL,
 };
-use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
+use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, HHOOK, KBDLLHOOKSTRUCT, SetWindowsHookExW, UnhookWindowsHookEx, WH_KEYBOARD_LL,
-    WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
+    CallNextHookEx, HHOOK, KBDLLHOOKSTRUCT, PostMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
+    WH_KEYBOARD_LL, WM_COMMAND, WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
 };
 
 use crate::injector;
@@ -57,6 +57,8 @@ pub enum HookAction {
     },
     /// Swallow original event and trigger off-thread custom action by ID (NFR-P3).
     TriggerCustomAction(u32),
+    /// Swallow original event and toggle top-row mode via message to agent window (Fn + Esc).
+    ToggleTopRowMode,
 }
 
 /// Active state tracking for virtual keys `0..=255`.
@@ -69,6 +71,19 @@ static FN_DOWN: AtomicBool = AtomicBool::new(false);
 
 /// Global hook active flag (set to false when paused or disconnected).
 static IS_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+/// Agent message window handle for asynchronous notifications (e.g. Fn + Esc mode toggle).
+static AGENT_HWND: AtomicIsize = AtomicIsize::new(0);
+
+/// Registers the agent message window handle.
+pub fn set_agent_window(hwnd: HWND) {
+    AGENT_HWND.store(hwnd.0 as isize, Ordering::Release);
+}
+
+/// Clears the agent message window handle.
+pub fn clear_agent_window() {
+    AGENT_HWND.store(0, Ordering::Release);
+}
 
 /// Raw atomic pointer to the current [`CompiledMappingTable`].
 ///
@@ -234,6 +249,16 @@ pub fn process_keyboard_event(
         return HookAction::Swallow;
     }
 
+    // 7b. Fn + Esc: Toggle Top-Row Mode (Fn Lock - M15.1)
+    let fn_down = FN_DOWN.load(Ordering::Relaxed);
+    if fn_down && vk == VK_ESCAPE {
+        if is_key_down {
+            return HookAction::ToggleTopRowMode;
+        } else {
+            return HookAction::Swallow;
+        }
+    }
+
     // Keys outside 0..=255 cannot be indexed in the table.
     if vk > 255 {
         return HookAction::CallNextHook;
@@ -251,7 +276,6 @@ pub fn process_keyboard_event(
             }
             KeyState::Swallowed => HookAction::Swallow,
             KeyState::None => {
-                let fn_down = FN_DOWN.load(Ordering::Relaxed);
                 let action = table.lookup(vk, fn_down);
                 match action {
                     RemapAction::PassThrough => HookAction::CallNextHook,
@@ -358,6 +382,21 @@ pub unsafe extern "system" fn low_level_keyboard_proc(
         }
         HookAction::TriggerCustomAction(id) => {
             crate::action_worker::dispatch_action(id);
+            LRESULT(1)
+        }
+        HookAction::ToggleTopRowMode => {
+            let hwnd_raw = AGENT_HWND.load(Ordering::Acquire);
+            if hwnd_raw != 0 {
+                // SAFETY: PostMessageW queues message asynchronously without blocking hook thread.
+                unsafe {
+                    let _ = PostMessageW(
+                        Some(HWND(hwnd_raw as *mut _)),
+                        WM_COMMAND,
+                        WPARAM(crate::tray::IDM_TOGGLE_TOPROW_MODE),
+                        LPARAM(0),
+                    );
+                }
+            }
             LRESULT(1)
         }
     }
@@ -660,6 +699,40 @@ mod tests {
         // Subsequent up when already cleared -> CallNextHook
         let res_up2 = process_keyboard_event(0, WM_KEYUP, VK_F16, 0x67, 0, Some(&table), true);
         assert_eq!(res_up2, HookAction::CallNextHook);
+    }
+
+    #[test]
+    fn test_fn_esc_toggle_top_row_mode() {
+        let _guard = TEST_MUTEX.lock().unwrap();
+        reset_test_state();
+        let profile = NamedProfile::default_it();
+        let table = compile_profile(&profile);
+
+        // 1. Esc alone without Fn -> CallNextHook
+        let res_esc = process_keyboard_event(0, WM_KEYDOWN, VK_ESCAPE, 0x01, 0, Some(&table), true);
+        assert_eq!(res_esc, HookAction::CallNextHook);
+
+        // 2. Press and hold Fn (Right Option = VK_RMENU) -> Swallow
+        let res_fn =
+            process_keyboard_event(0, WM_SYSKEYDOWN, VK_RMENU, 0x38, 0, Some(&table), true);
+        assert_eq!(res_fn, HookAction::Swallow);
+        assert!(is_fn_down());
+
+        // 3. Press Esc while Fn is held -> ToggleTopRowMode
+        let res_fn_esc =
+            process_keyboard_event(0, WM_KEYDOWN, VK_ESCAPE, 0x01, 0, Some(&table), true);
+        assert_eq!(res_fn_esc, HookAction::ToggleTopRowMode);
+
+        // 4. Release Esc while Fn is held -> Swallow
+        let res_fn_esc_up =
+            process_keyboard_event(0, WM_KEYUP, VK_ESCAPE, 0x01, 0, Some(&table), true);
+        assert_eq!(res_fn_esc_up, HookAction::Swallow);
+
+        // 5. Release Fn -> Swallow
+        let res_fn_up =
+            process_keyboard_event(0, WM_SYSKEYUP, VK_RMENU, 0x38, 0, Some(&table), true);
+        assert_eq!(res_fn_up, HookAction::Swallow);
+        assert!(!is_fn_down());
     }
 
     #[test]

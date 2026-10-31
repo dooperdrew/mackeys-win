@@ -12,6 +12,7 @@ pub mod hook;
 pub mod injector;
 pub mod ipc;
 pub mod logger;
+pub mod osd;
 pub mod single_instance;
 pub mod state;
 pub mod tray;
@@ -24,8 +25,8 @@ pub use battery::{
 };
 pub use device_notify::{detect_connected_apple_model, probe_connected_apple_keyboards};
 pub use game_mode::{
-    GameModeTracker, WM_GAME_MODE_EVENT, is_foreground_game, is_fullscreen_rect,
-    is_ignored_shell_class, matches_process_list,
+    GameModeTracker, WM_GAME_MODE_EVENT, get_foreground_process_name, is_foreground_game,
+    is_fullscreen_rect, is_ignored_shell_class, matches_process_list,
 };
 pub use hook::{
     HookAction, HookHandle, KeyState, clear_active_table, decode_remap, encode_remap,
@@ -40,6 +41,7 @@ pub use ipc::{
 pub use logger::{
     get_recent_logs, is_enabled as is_logging_enabled, log, set_enabled as set_logging_enabled,
 };
+pub use osd::OsdOverlay;
 
 /// Runs the complete background daemon message pump, tray icon, and hook engine.
 ///

@@ -185,6 +185,17 @@ pub fn get_window_process_name(hwnd: HWND) -> Option<String> {
     }
 }
 
+/// Returns the executable filename of the current foreground application (M16.1).
+#[must_use]
+pub fn get_foreground_process_name() -> Option<String> {
+    // SAFETY: GetForegroundWindow returns the window handle currently in the foreground.
+    let hwnd = unsafe { GetForegroundWindow() };
+    if hwnd.0.is_null() {
+        return None;
+    }
+    get_window_process_name(hwnd)
+}
+
 /// Checks whether the current foreground window represents an active game.
 #[must_use]
 pub fn is_foreground_game(config: &Config) -> bool {

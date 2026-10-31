@@ -8,6 +8,7 @@
 pub mod config;
 pub mod device;
 pub mod engine;
+pub mod inertial_scroll;
 pub mod key;
 
 pub use config::{
@@ -15,7 +16,12 @@ pub use config::{
     KeyboardLayout, KeyboardModelType, ModifierPreset, NamedProfile, ThemeMode, TopRowMode,
     atomic_write, default_config_dir, default_config_path,
 };
+pub use device::{
+    MAGIC_MOUSE_2_PID, MAGIC_MOUSE_USBC_PID, MAGIC_TRACKPAD_2_PID, MAGIC_TRACKPAD_USBC_PID,
+    is_apple_mouse, is_apple_trackpad,
+};
 pub use engine::{CompiledMappingTable, RemapAction, compile_profile};
+pub use inertial_scroll::{InertialScroller, ScrollDeltas, WHEEL_DELTA};
 pub use key::{
     Key, MAGICBRIDGE_EXTRA_INFO, SC_ISO_ALTGR_SYNTHETIC_LCTRL, VK_A, VK_ADD, VK_APPS, VK_B,
     VK_BACK, VK_C, VK_CAPITAL, VK_CLEAR, VK_CONTROL, VK_D, VK_DECIMAL, VK_DELETE, VK_DIVIDE,

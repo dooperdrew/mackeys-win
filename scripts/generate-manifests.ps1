@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Generates WinGet and Scoop package manifests for a given MagicBridge release.
 
@@ -43,7 +43,7 @@ Write-Host "Generating package manifests for MagicBridge v$Version..." -Foregrou
 
 # 2. Resolve Archive & Calculate Hash
 if (-not $ArchivePath) {
-    $ArchivePath = Join-Path $RepoRoot "dist\MagicBridge-v$Version-windows-x64.zip"
+    $ArchivePath = Join-Path $RepoRoot "dist\MagicBridge-v$Version-portable.zip"
 }
 
 if (-not (Test-Path $ArchivePath)) {
@@ -74,13 +74,11 @@ PackageVersion: $Version
 InstallerType: zip
 NestedInstallerType: portable
 NestedInstallerFiles:
-  - RelativeFilePath: magicbridge-agent.exe
-    PortableCommandAlias: magicbridge-agent
-  - RelativeFilePath: magicbridge-settings.exe
+  - RelativeFilePath: magicbridge.exe
     PortableCommandAlias: magicbridge
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/DooperDrew/magicbridge/releases/download/v$Version/MagicBridge-v$Version-windows-x64.zip
+    InstallerUrl: https://github.com/DooperDrew/magicbridge/releases/download/v$Version/MagicBridge-v$Version-portable.zip
     InstallerSha256: $Hash
     UpgradeBehavior: install
 ManifestType: installer
@@ -138,28 +136,24 @@ $ScoopJson = @"
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/DooperDrew/magicbridge/releases/download/v$Version/MagicBridge-v$Version-windows-x64.zip",
+            "url": "https://github.com/DooperDrew/magicbridge/releases/download/v$Version/MagicBridge-v$Version-portable.zip",
             "hash": "$Hash"
         }
     },
     "bin": [
-        "magicbridge-agent.exe",
-        [
-            "magicbridge-settings.exe",
-            "magicbridge"
-        ]
+        "magicbridge.exe"
     ],
     "shortcuts": [
         [
-            "magicbridge-settings.exe",
-            "MagicBridge Settings"
+            "magicbridge.exe",
+            "MagicBridge"
         ]
     ],
     "checkver": "github",
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/DooperDrew/magicbridge/releases/download/v`$version/MagicBridge-v`$version-windows-x64.zip"
+                "url": "https://github.com/DooperDrew/magicbridge/releases/download/v`$version/MagicBridge-v`$version-portable.zip"
             }
         }
     }

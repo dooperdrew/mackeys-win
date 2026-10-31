@@ -10,7 +10,7 @@ env:
 
 jobs:
   build-and-release:
-    name: Build & Release Portable Archive
+    name: Build & Package Windows Release (x64)
     runs-on: windows-latest
 
     permissions:
@@ -24,27 +24,27 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
+          components: clippy, rustfmt
 
-      - name: Build release binaries
-        run: cargo build --workspace --release
+      - name: Run Verification Gate
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace -- --test-threads=1
 
-      - name: Stage release files
+      - name: Package Release Assets
         shell: pwsh
         run: |
-          $stage = "MagicBridge-$($env:GITHUB_REF_NAME)-windows-x64"
-          New-Item -ItemType Directory -Path $stage
-          Copy-Item target\release\magicbridge-agent.exe $stage\
-          Copy-Item target\release\magicbridge-settings.exe $stage\
-          Copy-Item README.md $stage\
-          Copy-Item CHANGELOG.md $stage\
-          if (Test-Path crates\settings\locales) {
-            Copy-Item -Recurse crates\settings\locales $stage\locales
-          }
-          Compress-Archive -Path $stage -DestinationPath "$stage.zip"
-          echo "ARCHIVE_PATH=$stage.zip" >> $env:GITHUB_ENV
+          $ver = "$($env:GITHUB_REF_NAME)".TrimStart('v')
+          & .\scripts\package-release.ps1 -Version $ver -OutputDir "dist"
+          Get-FileHash -Path dist\* -Algorithm SHA256 | Out-File -Encoding utf8 dist\SHA256SUMS.txt
+          Get-Content dist\SHA256SUMS.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ARCHIVE_PATH }}
+          files: |
+            dist/*.exe
+            dist/*.zip
+            dist/SHA256SUMS.txt
           generate_release_notes: true

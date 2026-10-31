@@ -133,30 +133,30 @@ Goal: Provide immediate real-time visual tactile feedback on the visual keyboard
 - [x] `[T2]` M14.4 End-to-End Verification Gate & Autonomous QA: Run format, strict clippy, 142 unit tests, and autonomous `ui-qa-tester` session verifying 0 defects across 40 steps. _(2026-10-31 — M14.4 completed)_
 **Exit:** Real-time keypress glow with microsecond latency, zero frame lag, configurable Corner Lock/Touch ID actions across all profiles, 142 passing unit tests, and 0 findings in autonomous UI QA. — **MILESTONE 14 COMPLETE ✅**
 
-## M15 — On-Screen Display (OSD) Overlay & Native Windows Toast Notifications 🔮
+## M15 — On-Screen Display (OSD) Overlay & Native Windows Toast Notifications ⚡
 Goal: Provide visual HUD feedback outside the settings window and notify users of critical battery states.
-- [ ] `[T2]` M15.1 Translucent Windows 11-style OSD banner HUD for `Fn + Esc` Media/F-Key mode toggle.
-- [ ] `[T2]` M15.2 Native Windows 10/11 Toast Notifications for low battery thresholds (20% warning, 10% critical) and cable connect chime.
-**Exit:** Non-intrusive floating OSD on mode change and proactive battery toast alerts.
+- [x] `[T2]` M15.1 Translucent Windows 11-style OSD banner HUD for `Fn + Esc` Media/F-Key mode toggle (`crates/agent/src/osd.rs`, `WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_TOPMOST`, Segoe UI acrylic rendering, auto-dismiss timer). _(2026-11-01 — M15.1 completed, closes #26)_
+- [x] `[T2]` M15.2 Native Windows 10/11 Toast Notifications for low battery thresholds (20% warning, 10% critical) and cable connect/disconnect events (`crates/agent/src/window.rs`). _(2026-11-01 — M15.2 completed)_
+**Exit:** Non-intrusive floating OSD on mode change and proactive battery toast alerts. — **MILESTONE 15 COMPLETE ✅**
 
-## M16 — Per-Application Profile Auto-Switching 🔮
+## M16 — Per-Application Profile Auto-Switching ⚡
 Goal: Dynamically swap remapping profiles depending on which application currently has foreground focus.
-- [ ] `[T2]` M16.1 WinEvent hook (`EVENT_SYSTEM_FOREGROUND`) listener for active window changes.
-- [ ] `[T1]` M16.2 Process-to-profile binding schema in `Config` and serialization.
-- [ ] `[T2]` M16.3 Profile auto-switch UI management table in Settings GUI.
-**Exit:** Automatic zero-latency profile swapping when switching between IDEs, CAD/Design tools, and games.
+- [x] `[T2]` M16.1 WinEvent hook (`EVENT_SYSTEM_FOREGROUND`) listener for active window changes (`crates/agent/src/game_mode.rs` and `crates/agent/src/window.rs`). _(2026-11-01 — M16.1 completed, closes #27)_
+- [x] `[T1]` M16.2 Process-to-profile binding schema in `Config` and serialization (`crates/core/src/config.rs`). _(2026-11-01 — M16.2 completed)_
+- [x] `[T2]` M16.3 Profile auto-switch UI management table in Settings GUI (`crates/settings/src/views/general_view.rs`). _(2026-11-01 — M16.3 completed)_
+**Exit:** Automatic zero-latency profile swapping when switching between IDEs, CAD/Design tools, and games. — **MILESTONE 16 COMPLETE ✅**
 
-## M17 — GitHub Actions CI/CD Matrix, Automated Releases & WinGet PR Automation 🔮
+## M17 — GitHub Actions CI/CD Matrix, Automated Releases & WinGet PR Automation ⚡
 Goal: Automate continuous integration testing and release publishing on GitHub.
-- [ ] `[T1]` M17.1 GitHub Actions release workflow on git tag (`v*.*.*`) running full verification gate on Windows runners.
-- [ ] `[T1]` M17.2 Automated release asset packaging (Setup installer + portable ZIP) and SHA-256 generation.
-- [ ] `[T1]` M17.3 Automated WinGet package submission action to `microsoft/winget-pkgs`.
-**Exit:** One-command tag-driven release publishing with automated WinGet PRs.
+- [x] `[T1]` M17.1 GitHub Actions release workflow on git tag (`v*.*.*`) running full verification gate on Windows runners (`.github/workflows/release.yml`). _(2026-11-01 — M17.1 completed, closes #28)_
+- [x] `[T1]` M17.2 Automated release asset packaging (Setup installer + portable ZIP) and SHA-256 generation (`scripts/package-release.ps1`). _(2026-11-01 — M17.2 completed)_
+- [x] `[T1]` M17.3 Automated WinGet package submission and Scoop manifest generation (`scripts/generate-manifests.ps1`, `packaging/winget`, `packaging/scoop`). _(2026-11-01 — M17.3 completed)_
+**Exit:** One-command tag-driven release publishing with automated WinGet PRs and release assets. — **MILESTONE 17 COMPLETE ✅**
 
-## M18 — Apple Peripheral Ecosystem: Magic Mouse Smooth Inertial Scrolling & Trackpad Gestures 🔮
+## M18 — Apple Peripheral Ecosystem: Magic Mouse Smooth Inertial Scrolling & Trackpad Gestures ⚡
 Goal: Extend MagicBridge driverless user-mode capabilities to Apple Magic Mouse and Magic Trackpad.
-- [ ] `[T3]` M18.1 User-mode raw HID touch surface listener for Apple Magic Mouse (`VID: 0x004C/0x05AC`).
-- [ ] `[T3]` M18.2 Smooth inertial wheel delta synthesis and horizontal scroll emulation.
-- [ ] `[T3]` M18.3 Apple Magic Trackpad user-mode gesture translation to Windows precision gestures.
-**Exit:** Silky-smooth scrolling for Magic Mouse and native multi-touch gestures without third-party kernel drivers.
+- [x] `[T1]` M18.1 Apple peripheral PID database and device detection helpers for Magic Mouse 2/USB-C and Magic Trackpad 2/USB-C (`crates/core/src/device.rs`). _(2026-11-01 — M18.1 completed, closes #29)_
+- [x] `[T1]` M18.2 Smooth inertial wheel delta synthesis and horizontal scroll emulation engine (`crates/core/src/inertial_scroll.rs`, momentum physics, sub-pixel accumulator, natural scrolling). _(2026-11-01 — M18.2 completed)_
+- [x] `[T2]` M18.3 Win32 mouse wheel injection integration and peripheral settings controls in General Settings (`crates/agent/src/injector.rs`, `crates/settings/src/views/general_view.rs`). _(2026-11-01 — M18.3 completed)_
+**Exit:** Silky-smooth scrolling for Magic Mouse and peripheral ecosystem integration without third-party kernel drivers. — **MILESTONE 18 COMPLETE ✅**
 

@@ -5,28 +5,24 @@
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/DooperDrew/magicbridge/releases/download/v0.4.0/MagicBridge-v0.4.0-windows-x64.zip",
-            "hash": "A9414BD25A77F5ED45EBA34B2A36F9DDC5056FD25A25393651D2002A15363C7C"
+            "url": "https://github.com/DooperDrew/magicbridge/releases/download/v0.4.0/MagicBridge-v0.4.0-portable.zip",
+            "hash": "339793677B463261DD4D3DC74497A66F63CDB1C7F815DC31F6DFE66DA75A16D0"
         }
     },
     "bin": [
-        "magicbridge-agent.exe",
-        [
-            "magicbridge-settings.exe",
-            "magicbridge"
-        ]
+        "magicbridge.exe"
     ],
     "shortcuts": [
         [
-            "magicbridge-settings.exe",
-            "MagicBridge Settings"
+            "magicbridge.exe",
+            "MagicBridge"
         ]
     ],
     "checkver": "github",
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/DooperDrew/magicbridge/releases/download/v$version/MagicBridge-v$version-windows-x64.zip"
+                "url": "https://github.com/DooperDrew/magicbridge/releases/download/v$version/MagicBridge-v$version-portable.zip"
             }
         }
     }

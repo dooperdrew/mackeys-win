@@ -640,6 +640,25 @@ pub struct Config {
     /// List of executable names (e.g. ["game.exe", "steam.exe"]) that trigger game mode auto-pause (F9.2).
     #[serde(default)]
     pub game_mode_processes: Vec<String>,
+    /// Whether on-screen display (OSD) overlay HUD is enabled on mode/profile switch (M15.1).
+    #[serde(default = "default_osd_enabled")]
+    pub osd_enabled: bool,
+    /// Duration in milliseconds for the OSD overlay HUD to remain visible (M15.1).
+    #[serde(default = "default_osd_duration_ms")]
+    pub osd_duration_ms: u32,
+    /// Process-to-profile mappings for automatic profile switching (M16).
+    /// Maps executable filename (e.g. "code.exe") to profile name.
+    #[serde(default)]
+    pub app_profiles: BTreeMap<String, String>,
+    /// Whether smooth inertial scrolling for Apple Magic Mouse is enabled (M18.1).
+    #[serde(default = "default_magic_mouse_smooth_scroll")]
+    pub magic_mouse_smooth_scroll: bool,
+    /// Whether natural (macOS-style) scrolling direction is enabled for Magic Mouse (M18.1).
+    #[serde(default = "default_magic_mouse_natural_scroll")]
+    pub magic_mouse_natural_scroll: bool,
+    /// Scroll speed multiplier percentage for Apple Magic Mouse (e.g. 100 = 1.0x) (M18.2).
+    #[serde(default = "default_magic_mouse_scroll_speed_percent")]
+    pub magic_mouse_scroll_speed_percent: u32,
     /// Named profiles map indexed by profile name (F7.7).
     #[serde(default)]
     pub profiles: BTreeMap<String, NamedProfile>,
@@ -659,6 +678,26 @@ const fn default_battery_threshold() -> u8 {
 
 const fn default_battery_tray_badge() -> bool {
     true
+}
+
+const fn default_osd_enabled() -> bool {
+    true
+}
+
+const fn default_osd_duration_ms() -> u32 {
+    1200
+}
+
+const fn default_magic_mouse_smooth_scroll() -> bool {
+    true
+}
+
+const fn default_magic_mouse_natural_scroll() -> bool {
+    false
+}
+
+const fn default_magic_mouse_scroll_speed_percent() -> u32 {
+    100
 }
 
 fn default_ui_language() -> String {
@@ -685,12 +724,33 @@ impl Default for Config {
             debug_logging: false,
             game_mode_enabled: false,
             game_mode_processes: Vec::new(),
+            osd_enabled: default_osd_enabled(),
+            osd_duration_ms: default_osd_duration_ms(),
+            app_profiles: BTreeMap::new(),
+            magic_mouse_smooth_scroll: default_magic_mouse_smooth_scroll(),
+            magic_mouse_natural_scroll: default_magic_mouse_natural_scroll(),
+            magic_mouse_scroll_speed_percent: default_magic_mouse_scroll_speed_percent(),
             profiles,
         }
     }
 }
 
 impl Config {
+    /// Returns the profile bound to `exe_name`, if one is configured for auto-switching (M16).
+    #[must_use]
+    pub fn profile_for_process(&self, exe_name: &str) -> Option<&str> {
+        let trimmed = exe_name.trim();
+        for (app, profile) in &self.app_profiles {
+            if app.eq_ignore_ascii_case(trimmed)
+                || (app.ends_with(".exe") && app[..app.len() - 4].eq_ignore_ascii_case(trimmed))
+                || (trimmed.ends_with(".exe")
+                    && trimmed[..trimmed.len() - 4].eq_ignore_ascii_case(app))
+            {
+                return Some(profile.as_str());
+            }
+        }
+        None
+    }
     /// Returns `true` if `exe_name` matches any configured game mode process (case-insensitive).
     #[must_use]
     pub fn is_game_process(&self, exe_name: &str) -> bool {
@@ -1400,5 +1460,32 @@ mod tests {
 
         let loaded = Config::from_toml_str(&toml_str).expect("should deserialize");
         assert_eq!(loaded.keyboard_model, AppleModelId::A1644);
+    }
+
+    #[test]
+    fn test_app_profile_auto_switching_and_osd_config() {
+        let mut config = Config::default();
+        assert!(config.osd_enabled);
+        assert_eq!(config.osd_duration_ms, 1200);
+        assert!(config.magic_mouse_smooth_scroll);
+
+        config
+            .app_profiles
+            .insert("code.exe".to_string(), "Mac Layout".to_string());
+        config
+            .app_profiles
+            .insert("photoshop".to_string(), "Design".to_string());
+
+        assert_eq!(config.profile_for_process("code.exe"), Some("Mac Layout"));
+        assert_eq!(config.profile_for_process("CODE"), Some("Mac Layout"));
+        assert_eq!(config.profile_for_process("photoshop.exe"), Some("Design"));
+        assert_eq!(config.profile_for_process("notepad.exe"), None);
+
+        let toml_str = config.to_toml_string().expect("should serialize");
+        assert!(toml_str.contains("osd_enabled = true"));
+        assert!(toml_str.contains("code.exe"));
+
+        let loaded = Config::from_toml_str(&toml_str).expect("should deserialize");
+        assert_eq!(loaded.profile_for_process("code"), Some("Mac Layout"));
     }
 }

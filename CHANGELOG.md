@@ -4,6 +4,33 @@ All development steps, hardware discoveries, architectural decisions, and commit
 
 ---
 
+## 2026-11-01 — Milestones M15, M16, M17 & M18: OSD Overlay HUD, Per-App Profiles, CI/CD Packaging & Peripheral Ecosystem
+
+### Objective & Architecture
+- **Milestone M15 — On-Screen Display (OSD) Overlay HUD & Native Windows Toast Notifications**:
+  - Implemented `OsdOverlay` in `crates/agent/src/osd.rs` using a translucent acrylic Win32 window (`WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_NOACTIVATE | WS_EX_TOPMOST | WS_POPUP`) with dark acrylic fill (`#14181E`), electric cyan accent border (`#00D2FF`), Segoe UI typography, and auto-dismiss timer.
+  - Intercepted `Fn + Esc` in `WH_KEYBOARD_LL` low-level hook (`crates/agent/src/hook.rs`) to asynchronously post `IDM_TOGGLE_TOPROW_MODE` to the daemon window without blocking the hot path, instantly toggling between Media Keys and Function Keys mode with floating OSD HUD feedback.
+  - Implemented 2-tier low battery notifications (warning at configurable threshold, critical alert at 10%) and native Windows Toast Notifications on cable connect/disconnect (`crates/agent/src/window.rs`).
+- **Milestone M16 — Per-Application Profile Auto-Switching**:
+  - Leveraged `EVENT_SYSTEM_FOREGROUND` WinEvent hook in `crates/agent/src/game_mode.rs` to detect active window changes and query the foreground executable image name.
+  - Added `app_profiles: BTreeMap<String, String>` and `Config::profile_for_process(&self, exe: &str) -> Option<&str>` with case-insensitive and `.exe` suffix tolerance.
+  - Dynamically swaps active profiles, recompiles `CompiledMappingTable`, updates the system tray, and triggers profile OSD notification upon application switch.
+- **Milestone M17 — GitHub Actions CI/CD Matrix, Automated Releases & WinGet PR Automation**:
+  - Updated `.github/workflows/release.yml` with Windows x64 runners, full verification gate (`cargo fmt`, `cargo clippy`, `cargo test`), release asset packaging, and automated SHA-256 generation.
+  - Enhanced `scripts/package-release.ps1` and `scripts/generate-manifests.ps1` to produce single-executable installer (`MagicBridge-Setup.exe`), versioned installer (`MagicBridge-v0.4.0-Setup.exe`), and portable zip (`MagicBridge-v0.4.0-portable.zip`), auto-generating WinGet and Scoop package manifests.
+- **Milestone M18 — Apple Peripheral Ecosystem: Magic Mouse Smooth Inertial Scrolling & Trackpad Support**:
+  - Added Apple peripheral Product IDs (`MAGIC_MOUSE_2_PID`, `MAGIC_MOUSE_USBC_PID`, `MAGIC_TRACKPAD_2_PID`, `MAGIC_TRACKPAD_USBC_PID`) and hardware recognition helpers in `crates/core/src/device.rs`.
+  - Implemented `InertialScroller` in `crates/core/src/inertial_scroll.rs`: pure physics momentum decay (`friction = 0.92`), sub-pixel delta accumulator (`WHEEL_DELTA = 120`), macOS-style natural scrolling inversion, and horizontal scroll emulation.
+  - Added Win32 mouse wheel injection (`send_mouse_wheel`) in `crates/agent/src/injector.rs`.
+  - Added Apple Peripheral Ecosystem settings (smooth scrolling, natural scrolling, scroll speed percentage) in General Settings.
+- **Responsive 2-Column Layout & Autonomous UI QA Hardening (0 Defects)**:
+  - Redesigned General Settings into a responsive 2-column layout ("Hardware & Appearance" vs "System & Automation") wrapped inside `egui::ScrollArea::vertical()`.
+  - Resolved visual layout clipping and control overlap identified by `ui-qa-tester`.
+  - Verification Gate passed 100%: format check clean, clippy clean (`-D warnings`), all 153 tests passed, release build succeeded, and autonomous QA crawl completed 40 steps with **0 findings / 0 defects**.
+  - Closes #26 (M15 OSD HUD & Toasts), closes #27 (M16 Per-App Profiles), closes #28 (M17 CI/CD Releases & WinGet PRs), and closes #29 (M18 Magic Mouse Inertial Scrolling).
+
+---
+
 ## 2026-10-31 — Milestone M14: P1 Ergonomics — Live Keystroke Glow Telemetry & Corner Lock/Touch ID Workflow Actions
 
 ### Objective & Architecture

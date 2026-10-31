@@ -28,6 +28,7 @@ pub const IDM_TOPROW_FKEYS_FIRST: usize = 1003;
 pub const IDM_OPEN_SETTINGS: usize = 1004;
 pub const IDM_START_WITH_WINDOWS: usize = 1005;
 pub const IDM_QUIT: usize = 1006;
+pub const IDM_TOGGLE_TOPROW_MODE: usize = 1007;
 pub const IDM_PROFILE_BASE: usize = 2000;
 
 /// Copies a string slice into a fixed-size UTF-16 null-terminated buffer.

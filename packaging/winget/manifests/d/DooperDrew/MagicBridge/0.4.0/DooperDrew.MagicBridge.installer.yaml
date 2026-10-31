@@ -4,14 +4,12 @@ PackageVersion: 0.4.0
 InstallerType: zip
 NestedInstallerType: portable
 NestedInstallerFiles:
-  - RelativeFilePath: magicbridge-agent.exe
-    PortableCommandAlias: magicbridge-agent
-  - RelativeFilePath: magicbridge-settings.exe
+  - RelativeFilePath: magicbridge.exe
     PortableCommandAlias: magicbridge
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/DooperDrew/magicbridge/releases/download/v0.4.0/MagicBridge-v0.4.0-windows-x64.zip
-    InstallerSha256: A9414BD25A77F5ED45EBA34B2A36F9DDC5056FD25A25393651D2002A15363C7C
+    InstallerUrl: https://github.com/DooperDrew/magicbridge/releases/download/v0.4.0/MagicBridge-v0.4.0-portable.zip
+    InstallerSha256: 339793677B463261DD4D3DC74497A66F63CDB1C7F815DC31F6DFE66DA75A16D0
     UpgradeBehavior: install
 ManifestType: installer
 ManifestVersion: 1.9.0

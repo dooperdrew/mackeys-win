@@ -106,6 +106,28 @@ fn hex_after(s: &str, markers: &[&str]) -> Option<u32> {
     })
 }
 
+/// Apple Magic Mouse 2 Product ID (Lightning: 0x0269).
+pub const MAGIC_MOUSE_2_PID: u16 = 0x0269;
+/// Apple Magic Mouse USB-C Product ID (0x02BB).
+pub const MAGIC_MOUSE_USBC_PID: u16 = 0x02BB;
+
+/// Apple Magic Trackpad 2 Product ID (Lightning: 0x0265).
+pub const MAGIC_TRACKPAD_2_PID: u16 = 0x0265;
+/// Apple Magic Trackpad USB-C Product ID (0x030E).
+pub const MAGIC_TRACKPAD_USBC_PID: u16 = 0x030E;
+
+/// Returns `true` if the VID and PID correspond to an Apple Magic Mouse (M18.1).
+#[must_use]
+pub const fn is_apple_mouse(vid: u16, pid: u16) -> bool {
+    crate::is_apple_vendor(vid) && matches!(pid, MAGIC_MOUSE_2_PID | MAGIC_MOUSE_USBC_PID)
+}
+
+/// Returns `true` if the VID and PID correspond to an Apple Magic Trackpad (M18.3).
+#[must_use]
+pub const fn is_apple_trackpad(vid: u16, pid: u16) -> bool {
+    crate::is_apple_vendor(vid) && matches!(pid, MAGIC_TRACKPAD_2_PID | MAGIC_TRACKPAD_USBC_PID)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -162,5 +184,16 @@ mod tests {
         assert_eq!(p.transport, Transport::Unknown);
         assert_eq!(p.vid, None);
         assert_eq!(p.pid, None);
+    }
+
+    #[test]
+    fn test_apple_peripherals_recognition() {
+        assert!(is_apple_mouse(0x05AC, MAGIC_MOUSE_2_PID));
+        assert!(is_apple_mouse(0x004C, MAGIC_MOUSE_USBC_PID));
+        assert!(!is_apple_mouse(0x05AC, 0x026C)); // Keyboard is not a mouse
+
+        assert!(is_apple_trackpad(0x05AC, MAGIC_TRACKPAD_2_PID));
+        assert!(is_apple_trackpad(0x004C, MAGIC_TRACKPAD_USBC_PID));
+        assert!(!is_apple_trackpad(0x05AC, 0x0269));
     }
 }

@@ -49,8 +49,11 @@ struct WindowData {
     taskbar_created_msg: u32,
     hook: Option<HookHandle>,
     low_battery_notified: bool,
+    critical_battery_notified: bool,
+    last_charging_state: Option<bool>,
     battery_timer_minutes: u32,
     game_mode_tracker: Option<crate::game_mode::GameModeTracker>,
+    osd: Option<crate::osd::OsdOverlay>,
 }
 
 impl WindowData {
@@ -62,10 +65,11 @@ impl WindowData {
         }
     }
 
-    /// Synchronizes the foreground WinEvent hook for Game Mode auto-pause (F9.2).
+    /// Synchronizes the foreground WinEvent hook for Game Mode and Per-App Auto-Switching (F9.2, M16).
     fn sync_game_mode_tracker(&mut self, hwnd: HWND) {
         let needs_tracker = self.state.config.game_mode_enabled
-            || !self.state.config.game_mode_processes.is_empty();
+            || !self.state.config.game_mode_processes.is_empty()
+            || !self.state.config.app_profiles.is_empty();
         if needs_tracker && self.game_mode_tracker.is_none() {
             match crate::game_mode::GameModeTracker::install(hwnd) {
                 Ok(tracker) => self.game_mode_tracker = Some(tracker),
@@ -94,6 +98,8 @@ impl WindowData {
             self.state.battery_percent = None;
             self.state.is_charging = false;
             self.low_battery_notified = false;
+            self.critical_battery_notified = false;
+            self.last_charging_state = None;
             if let Some(ref mut tray) = self.tray {
                 tray.update(&self.state);
             }
@@ -113,15 +119,54 @@ impl WindowData {
         }
     }
 
-    /// Checks if a low-battery notification should be displayed once per discharge cycle (F6.2).
+    /// Checks battery notifications: cable connect/disconnect and 2-tier low battery (M15.2, F6.2).
     fn check_low_battery_notification(
         &mut self,
         _old_pct: Option<u8>,
         status: crate::battery::BatteryStatus,
     ) {
-        let threshold = self.state.config.low_battery_threshold_percent;
-        if status.percentage <= threshold {
-            if !self.low_battery_notified && !status.is_charging {
+        // 1. Cable connect / disconnect notifications (M15.2)
+        if let Some(was_charging) = self.last_charging_state {
+            if !was_charging
+                && status.is_charging
+                && let Some(ref tray) = self.tray
+            {
+                let title = "MagicBridge — Charging";
+                let msg = format!(
+                    "Magic Keyboard connected to power ({}%).",
+                    status.percentage
+                );
+                tray.show_notification(title, &msg);
+            } else if was_charging
+                && !status.is_charging
+                && let Some(ref tray) = self.tray
+            {
+                let title = "MagicBridge — Disconnected";
+                let msg = format!(
+                    "Magic Keyboard running on battery ({}%).",
+                    status.percentage
+                );
+                tray.show_notification(title, &msg);
+            }
+        }
+        self.last_charging_state = Some(status.is_charging);
+
+        // 2. Low and critical battery notifications (M15.2)
+        if !status.is_charging {
+            if status.percentage <= 10 && !self.critical_battery_notified {
+                self.critical_battery_notified = true;
+                self.low_battery_notified = true;
+                if let Some(ref tray) = self.tray {
+                    let title = "MagicBridge — Critical Battery";
+                    let msg = format!(
+                        "Magic Keyboard battery is critically low ({}%)! Connect charger immediately.",
+                        status.percentage
+                    );
+                    tray.show_notification(title, &msg);
+                }
+            } else if status.percentage <= self.state.config.low_battery_threshold_percent
+                && !self.low_battery_notified
+            {
                 self.low_battery_notified = true;
                 if let Some(ref tray) = self.tray {
                     let title = "MagicBridge — Low Battery";
@@ -131,10 +176,14 @@ impl WindowData {
                     );
                     tray.show_notification(title, &msg);
                 }
+            } else if status.percentage > self.state.config.low_battery_threshold_percent {
+                self.low_battery_notified = false;
+                self.critical_battery_notified = false;
             }
         } else {
-            // Reset latch when battery rises above threshold (e.g. after charging)
+            // Reset latches when charging
             self.low_battery_notified = false;
+            self.critical_battery_notified = false;
         }
     }
 
@@ -210,6 +259,7 @@ impl MessageWindow {
             }
         }
 
+        let osd = crate::osd::OsdOverlay::new().ok();
         let window_data = Box::new(WindowData {
             state,
             tray: None,
@@ -217,8 +267,11 @@ impl MessageWindow {
             taskbar_created_msg,
             hook: None,
             low_battery_notified: false,
+            critical_battery_notified: false,
+            last_charging_state: None,
             battery_timer_minutes: 0,
             game_mode_tracker: None,
+            osd,
         });
         let raw_ptr = Box::into_raw(window_data);
 
@@ -262,6 +315,7 @@ impl MessageWindow {
 
 impl Drop for MessageWindow {
     fn drop(&mut self) {
+        crate::hook::clear_agent_window();
         // SAFETY: Checks if window is still valid before calling DestroyWindow.
         let is_valid = unsafe { IsWindow(Some(self.hwnd)).as_bool() };
         if is_valid {
@@ -304,6 +358,8 @@ unsafe extern "system" fn wnd_proc(
 
     match msg {
         WM_CREATE => {
+            crate::hook::set_agent_window(hwnd);
+
             // 1. Initial probe of connected Apple keyboards to populate state before tray creation.
             let devices = probe_connected_apple_keyboards();
             data.state.sync_connected_devices(&devices);
@@ -349,6 +405,14 @@ unsafe extern "system" fn wnd_proc(
                         data.state.on_device_arrival(&path, &transport_str);
                         data.update_hook_state();
                         data.poll_battery();
+                        if let Some(ref tray) = data.tray {
+                            let title = "MagicBridge — Keyboard Connected";
+                            let msg = format!(
+                                "Apple Keyboard connected ({transport_str}). Active profile: {}",
+                                data.state.config.active_profile
+                            );
+                            tray.show_notification(title, &msg);
+                        }
                         if let Some(ref mut tray) = data.tray {
                             tray.update(&data.state);
                         }
@@ -368,6 +432,12 @@ unsafe extern "system" fn wnd_proc(
                         }
                         data.update_hook_state();
                         data.poll_battery();
+                        if let Some(ref tray) = data.tray {
+                            tray.show_notification(
+                                "MagicBridge — Keyboard Disconnected",
+                                "Apple Keyboard disconnected. Remapping paused.",
+                            );
+                        }
                         if let Some(ref mut tray) = data.tray {
                             tray.update(&data.state);
                         }
@@ -433,8 +503,39 @@ unsafe extern "system" fn wnd_proc(
                     &format!("Foreground game status changed: active={is_game}"),
                 );
                 data.update_hook_state();
+                if data.state.config.osd_enabled
+                    && let Some(ref osd) = data.osd
+                {
+                    osd.show_status(
+                        data.state.enabled,
+                        is_game,
+                        data.state.config.osd_duration_ms,
+                    );
+                }
                 if let Some(ref mut tray) = data.tray {
                     tray.update(&data.state);
+                }
+            }
+
+            // M16: Per-Application Profile Auto-Switching
+            if !is_game
+                && !data.state.config.app_profiles.is_empty()
+                && let Some(proc_name) = crate::game_mode::get_foreground_process_name()
+                && let Some(target_profile) = data.state.config.profile_for_process(&proc_name)
+            {
+                let target_profile = target_profile.to_string();
+                if data.state.config.active_profile != target_profile
+                    && data.state.set_active_profile(&target_profile)
+                {
+                    data.recompile_active_table();
+                    if data.state.config.osd_enabled
+                        && let Some(ref osd) = data.osd
+                    {
+                        osd.show_profile(&target_profile, data.state.config.osd_duration_ms);
+                    }
+                    if let Some(ref mut tray) = data.tray {
+                        tray.update(&data.state);
+                    }
                 }
             }
             LRESULT(0)
@@ -460,6 +561,15 @@ unsafe extern "system" fn wnd_proc(
                 IDM_TOGGLE_ENABLED => {
                     data.state.toggle_enabled();
                     data.update_hook_state();
+                    if data.state.config.osd_enabled
+                        && let Some(ref osd) = data.osd
+                    {
+                        osd.show_status(
+                            data.state.enabled,
+                            data.state.game_mode_active,
+                            data.state.config.osd_duration_ms,
+                        );
+                    }
                     if let Some(ref mut tray) = data.tray {
                         tray.update(&data.state);
                     }
@@ -467,6 +577,14 @@ unsafe extern "system" fn wnd_proc(
                 IDM_TOPROW_MEDIA_FIRST => {
                     data.state.set_top_row_mode(TopRowMode::MediaKeysFirst);
                     data.recompile_active_table();
+                    if data.state.config.osd_enabled
+                        && let Some(ref osd) = data.osd
+                    {
+                        osd.show_top_row_mode(
+                            TopRowMode::MediaKeysFirst,
+                            data.state.config.osd_duration_ms,
+                        );
+                    }
                     if let Some(ref mut tray) = data.tray {
                         tray.update(&data.state);
                     }
@@ -474,6 +592,30 @@ unsafe extern "system" fn wnd_proc(
                 IDM_TOPROW_FKEYS_FIRST => {
                     data.state.set_top_row_mode(TopRowMode::FKeysFirst);
                     data.recompile_active_table();
+                    if data.state.config.osd_enabled
+                        && let Some(ref osd) = data.osd
+                    {
+                        osd.show_top_row_mode(
+                            TopRowMode::FKeysFirst,
+                            data.state.config.osd_duration_ms,
+                        );
+                    }
+                    if let Some(ref mut tray) = data.tray {
+                        tray.update(&data.state);
+                    }
+                }
+                crate::tray::IDM_TOGGLE_TOPROW_MODE => {
+                    let new_mode = match data.state.active_top_row_mode() {
+                        TopRowMode::MediaKeysFirst => TopRowMode::FKeysFirst,
+                        TopRowMode::FKeysFirst => TopRowMode::MediaKeysFirst,
+                    };
+                    data.state.set_top_row_mode(new_mode);
+                    data.recompile_active_table();
+                    if data.state.config.osd_enabled
+                        && let Some(ref osd) = data.osd
+                    {
+                        osd.show_top_row_mode(new_mode, data.state.config.osd_duration_ms);
+                    }
                     if let Some(ref mut tray) = data.tray {
                         tray.update(&data.state);
                     }
@@ -494,6 +636,11 @@ unsafe extern "system" fn wnd_proc(
                     if let Some(name) = profiles.get(idx) {
                         data.state.set_active_profile(name);
                         data.recompile_active_table();
+                        if data.state.config.osd_enabled
+                            && let Some(ref osd) = data.osd
+                        {
+                            osd.show_profile(name, data.state.config.osd_duration_ms);
+                        }
                         if let Some(ref mut tray) = data.tray {
                             tray.update(&data.state);
                         }
@@ -509,10 +656,11 @@ unsafe extern "system" fn wnd_proc(
             unsafe {
                 let _ = KillTimer(Some(hwnd), IDT_BATTERY_TIMER);
             }
-            // Clean up device notification registration, hook, and tray icon before window is gone.
+            // Clean up device notification registration, hook, tray icon, and OSD before window is gone.
             data.hook.take();
             data.device_notify.take();
             data.tray.take();
+            data.osd.take();
             // SAFETY: PostQuitMessage posts WM_QUIT to exit message loop cleanly.
             unsafe {
                 PostQuitMessage(0);

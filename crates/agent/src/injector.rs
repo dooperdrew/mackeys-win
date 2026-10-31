@@ -5,8 +5,9 @@
 
 use magicbridge_core::{Key, MAGICBRIDGE_EXTRA_INFO};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    INPUT, INPUT_0, INPUT_KEYBOARD, KEYBD_EVENT_FLAGS, KEYBDINPUT, KEYEVENTF_EXTENDEDKEY,
-    KEYEVENTF_KEYUP, SendInput, VIRTUAL_KEY,
+    INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBD_EVENT_FLAGS, KEYBDINPUT,
+    KEYEVENTF_EXTENDEDKEY, KEYEVENTF_KEYUP, MOUSEEVENTF_HWHEEL, MOUSEEVENTF_WHEEL, MOUSEINPUT,
+    SendInput, VIRTUAL_KEY,
 };
 
 /// Maximum number of keys supported in a single atomic shortcut combo.
@@ -119,6 +120,46 @@ pub fn send_inputs(inputs: &[INPUT]) -> u32 {
     unsafe { SendInput(inputs, std::mem::size_of::<INPUT>() as i32) }
 }
 
+/// Builds a Win32 mouse wheel [`INPUT`] structure for vertical or horizontal wheel scrolling.
+pub fn build_mouse_wheel_input(delta: i32, horizontal: bool) -> INPUT {
+    let flags = if horizontal {
+        MOUSEEVENTF_HWHEEL
+    } else {
+        MOUSEEVENTF_WHEEL
+    };
+    INPUT {
+        r#type: INPUT_MOUSE,
+        Anonymous: INPUT_0 {
+            mi: MOUSEINPUT {
+                dx: 0,
+                dy: 0,
+                mouseData: delta as u32,
+                dwFlags: flags,
+                time: 0,
+                dwExtraInfo: MAGICBRIDGE_EXTRA_INFO,
+            },
+        },
+    }
+}
+
+/// Injects vertical and horizontal mouse wheel deltas into the system input queue (M18).
+pub fn send_mouse_wheel(vertical_delta: i32, horizontal_delta: i32) -> bool {
+    let mut inputs = [INPUT::default(); 2];
+    let mut count = 0;
+    if vertical_delta != 0 {
+        inputs[count] = build_mouse_wheel_input(vertical_delta, false);
+        count += 1;
+    }
+    if horizontal_delta != 0 {
+        inputs[count] = build_mouse_wheel_input(horizontal_delta, true);
+        count += 1;
+    }
+    if count == 0 {
+        return true;
+    }
+    send_inputs(&inputs[..count]) == count as u32
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,6 +197,28 @@ mod tests {
     #[test]
     fn test_send_inputs_empty_slice() {
         assert_eq!(send_inputs(&[]), 0);
+    }
+
+    #[test]
+    fn test_build_mouse_wheel_input() {
+        let v_input = build_mouse_wheel_input(120, false);
+        assert_eq!(v_input.r#type, INPUT_MOUSE);
+        // SAFETY: Reading mi union field of INPUT_MOUSE.
+        let mi_v = unsafe { v_input.Anonymous.mi };
+        assert_eq!(mi_v.mouseData, 120);
+        assert_eq!(mi_v.dwFlags, MOUSEEVENTF_WHEEL);
+        assert_eq!(mi_v.dwExtraInfo, MAGICBRIDGE_EXTRA_INFO);
+
+        let h_input = build_mouse_wheel_input(-120, true);
+        // SAFETY: Reading mi union field of INPUT_MOUSE.
+        let mi_h = unsafe { h_input.Anonymous.mi };
+        assert_eq!(mi_h.mouseData, (-120i32) as u32);
+        assert_eq!(mi_h.dwFlags, MOUSEEVENTF_HWHEEL);
+    }
+
+    #[test]
+    fn test_send_mouse_wheel_empty() {
+        assert!(send_mouse_wheel(0, 0));
     }
 
     #[test]
