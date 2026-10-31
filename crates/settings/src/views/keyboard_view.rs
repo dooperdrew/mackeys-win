@@ -2,7 +2,10 @@
 //!
 //! Complies with F7.2, F7.4, F7.7, and docs/04-ux.md.
 
+use std::collections::HashSet;
+
 use egui::{Color32, CornerRadius, Rect, Sense, Stroke, Ui, Vec2};
+use magicbridge_core::key::*;
 use magicbridge_core::{
     Config, CustomAction, FnKeyChoice, KeyAction, KeyboardLayout, ModifierPreset, NamedProfile,
 };
@@ -76,6 +79,9 @@ pub struct KeyboardViewState {
     pub dialog_error: Option<String>,
     pub dialog_focus_needed: bool,
     pub canvas_scale: f32,
+    pub live_keystroke_glow: bool,
+    pub held_keys: HashSet<String>,
+    pub last_pressed_key: Option<(String, u16)>,
 }
 
 impl Default for KeyboardViewState {
@@ -89,9 +95,74 @@ impl Default for KeyboardViewState {
             dialog_error: None,
             dialog_focus_needed: false,
             canvas_scale: 0.0,
+            live_keystroke_glow: true,
+            held_keys: HashSet::new(),
+            last_pressed_key: None,
         }
     }
 }
+
+/// Polls physical keyboard state using Win32 `GetAsyncKeyState` for live keypress glow.
+#[cfg(windows)]
+fn poll_physical_held_keys(state: &mut KeyboardViewState, ctx: &egui::Context) {
+    if !state.live_keystroke_glow {
+        if !state.held_keys.is_empty() {
+            state.held_keys.clear();
+            ctx.request_repaint();
+        }
+        return;
+    }
+
+    let mut currently_held = HashSet::new();
+
+    // Check modifiers first (with left/right distinction)
+    const MODIFIER_VKS: &[(u16, &str)] = &[
+        (VK_LSHIFT, "LeftShift"),
+        (VK_RSHIFT, "RightShift"),
+        (VK_LCONTROL, "LeftControl"),
+        (VK_RCONTROL, "RightControl"),
+        (VK_LMENU, "LeftOption"),
+        (VK_RMENU, "RightOption"),
+        (VK_LWIN, "LeftCommand"),
+        (VK_RWIN, "RightCommand"),
+        (VK_CAPITAL, "CapsLock"),
+    ];
+
+    for &(vk, id) in MODIFIER_VKS {
+        // SAFETY: Calling GetAsyncKeyState with a standard virtual key code is safe.
+        let key_state =
+            unsafe { windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(vk as i32) };
+        if (key_state as u16 & 0x8000) != 0 {
+            currently_held.insert(id.to_string());
+            state.last_pressed_key = Some((id.to_string(), vk));
+        }
+    }
+
+    // Check all physical keys defined in the active model
+    for key in &state.model.keys {
+        if key.vk != 0 && !currently_held.contains(key.id) {
+            // SAFETY: Calling GetAsyncKeyState with a standard virtual key code is safe.
+            let key_state = unsafe {
+                windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(key.vk as i32)
+            };
+            if (key_state as u16 & 0x8000) != 0 {
+                currently_held.insert(key.id.to_string());
+                state.last_pressed_key = Some((key.id.to_string(), key.vk));
+            }
+        }
+    }
+
+    if currently_held != state.held_keys {
+        state.held_keys = currently_held;
+        ctx.request_repaint();
+    } else if !state.held_keys.is_empty() {
+        ctx.request_repaint();
+    }
+}
+
+/// Fallback for non-Windows platforms.
+#[cfg(not(windows))]
+fn poll_physical_held_keys(_state: &mut KeyboardViewState, _ctx: &egui::Context) {}
 
 /// Renders the complete Keyboard view tab including profile bar, visual keyboard, and key editor.
 pub fn show(
@@ -100,6 +171,9 @@ pub fn show(
     config: &mut Config,
     i18n: &I18n,
 ) -> Option<ConfigChange> {
+    // Poll physical keys for live keystroke glow
+    poll_physical_held_keys(state, ui.ctx());
+
     let mut change = None;
 
     // 1. Profile Bar at the top (F7.7, F7.4, Issue #14: horizontal wrapping)
@@ -374,6 +448,34 @@ pub fn show(
         ui.selectable_value(&mut state.canvas_scale, 0.9, "90%");
         ui.selectable_value(&mut state.canvas_scale, 1.0, "100%");
         ui.selectable_value(&mut state.canvas_scale, 1.15, "115%");
+
+        ui.separator();
+
+        // Live Keystroke Glow toggle & Telemetry
+        let glow_toggle = ui
+            .toggle_value(&mut state.live_keystroke_glow, "⚡ Live Glow")
+            .on_hover_text(i18n.t("keyboard.live_glow_tooltip"));
+        if glow_toggle.changed() {
+            ui.ctx().request_repaint();
+        }
+
+        if state.live_keystroke_glow {
+            if let Some((ref key_name, vk)) = state.last_pressed_key
+                && !state.held_keys.is_empty()
+            {
+                ui.colored_label(
+                    Color32::from_rgb(0, 205, 255),
+                    format!(
+                        "● Input: {} (0x{:02X}) [{}]",
+                        key_name,
+                        vk,
+                        state.held_keys.len()
+                    ),
+                );
+            } else {
+                ui.colored_label(Color32::from_rgb(140, 150, 160), "⚡ Live Ready");
+            }
+        }
     });
 
     // Handle "Press a key to select" keyboard listener
@@ -607,8 +709,13 @@ fn render_visual_keyboard(
                 )
         });
 
+        let is_held_down = state.live_keystroke_glow && state.held_keys.contains(key.id);
+
         // Determine colors
-        let fill_color = if is_selected {
+        let fill_color = if is_held_down {
+            // Radiant Electric Cyan for live keypress glow
+            Color32::from_rgb(0, 205, 255)
+        } else if is_selected {
             Color32::from_rgb(255, 235, 180)
         } else if is_fn_trigger {
             Color32::from_rgb(250, 220, 190)
@@ -622,7 +729,9 @@ fn render_visual_keyboard(
             Color32::WHITE
         };
 
-        let stroke_color = if is_selected {
+        let stroke_color = if is_held_down {
+            Color32::from_rgb(255, 255, 255)
+        } else if is_selected {
             Color32::from_rgb(220, 120, 0)
         } else if is_remapped {
             Color32::from_rgb(45, 125, 210)
@@ -632,7 +741,13 @@ fn render_visual_keyboard(
             Color32::from_rgb(195, 200, 205)
         };
 
-        let stroke_width = if is_selected { 2.0_f32 } else { 1.0_f32 };
+        let stroke_width = if is_held_down {
+            2.5_f32
+        } else if is_selected {
+            2.0_f32
+        } else {
+            1.0_f32
+        };
 
         painter.rect(
             key_rect,
@@ -643,7 +758,9 @@ fn render_visual_keyboard(
         );
 
         // Localized label already fetched above
-        let text_color = if is_selected {
+        let text_color = if is_held_down {
+            Color32::from_rgb(10, 30, 60)
+        } else if is_selected {
             Color32::from_rgb(160, 80, 0)
         } else if is_remapped {
             Color32::from_rgb(20, 80, 180)

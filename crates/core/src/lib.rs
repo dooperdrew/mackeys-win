@@ -11,9 +11,9 @@ pub mod engine;
 pub mod key;
 
 pub use config::{
-    AppleModelId, Config, ConfigError, CustomAction, FnKeyChoice, KeyAction, KeyboardLayout,
-    KeyboardModelType, ModifierPreset, NamedProfile, ThemeMode, TopRowMode, atomic_write,
-    default_config_dir, default_config_path,
+    AppleModelId, Config, ConfigError, CornerKeyAction, CustomAction, FnKeyChoice, KeyAction,
+    KeyboardLayout, KeyboardModelType, ModifierPreset, NamedProfile, ThemeMode, TopRowMode,
+    atomic_write, default_config_dir, default_config_path,
 };
 pub use engine::{CompiledMappingTable, RemapAction, compile_profile};
 pub use key::{

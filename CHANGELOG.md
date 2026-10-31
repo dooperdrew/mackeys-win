@@ -4,6 +4,17 @@ All development steps, hardware discoveries, architectural decisions, and commit
 
 ---
 
+## 2026-10-31 — Milestone M14: P1 Ergonomics — Live Keystroke Glow Telemetry & Corner Lock/Touch ID Workflow Actions
+
+### Objective & Architecture
+- **Real-Time Visual Keystroke Glow (Input Telemetry)**: Implemented instantaneous physical keypress detection in `KeyboardViewState` using ultra-low-latency `GetAsyncKeyState` polling, highlighting active physical keys with radiant electric cyan (`rgb(0, 205, 255)`) and dark navy high-contrast legends, paired with an interactive live telemetry badge (`● Input: [Key] (VK 0x..) [Count]`).
+- **Apple Corner Key Workflow Actions**: Added `CornerKeyAction` (`LockWorkstation` [Win+L], `TaskView` [Win+Tab], `ShowDesktop` [Win+D], `Sleep`, `PassThrough`) to `Profile` in `crates/core/src/config.rs`, allowing users to configure the top-right corner key across all Apple keyboard models (Touch ID on A2449/A3122, Lock on A2450/A1644, or PrintScreen/Eject).
+- **Settings GUI Integration & i18n**: Added Corner / Lock Key action dropdown selector to General Settings (`general_view.rs`) with full localization in English (`en.toml`) and Italian (`it.toml`).
+- **Visual Feedback & Autonomous QA Hardening**: Enhanced battery tray badge toggle with an explicit visual status badge (`✓ Active` / `○ Disabled`), ensuring immediate perceptual change. Autonomous QA crawler (`ui-qa-tester`) passed across 40 steps with **0 findings / 0 defects**.
+- **Roadmap Planning**: Mapped future milestones M15 (OSD Overlay & Low-Battery Toasts), M16 (Per-App Profile Auto-Switching), M17 (GitHub Actions CI/CD Releases & WinGet PRs), and M18 (Apple Peripheral Ecosystem: Magic Mouse Smooth Scrolling & Trackpad Gestures).
+
+---
+
 ## 2026-10-31 — MagicBridge v0.4.0: Universal Apple Keyboard Family Support (Full-Size & Compact)
 
 ### Objective & Architecture

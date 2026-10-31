@@ -124,3 +124,39 @@ Goal: Extend first-class Windows integration across all generations of Apple Key
 - [x] `[T2]` M13.3 Hardware Model Selector & Auto-Detection: model combobox and `detect_connected_apple_model()` in General Settings, Setup Wizard Step 0, and Native Progressive Setup Wizard Step 3. Dynamic top-rail device status pill (`⚡ {Model} Connected`). _(2026-10-31 — M13.3 completed)_
 - [x] `[T1]` M13.4 Community Hardware QA Framework: empirical hardware testing template (`.github/ISSUE_TEMPLATE/hardware_qa_report.md`), Section 6 in `docs/06-qa-and-validation.md` (`QA-MODEL-01`..`06`), and documentation updates. _(2026-10-31 — M13.4 completed)_
 **Exit:** Complete support for all Apple keyboard models (Full-Size & Compact), live PID auto-detection, dynamic visual geometry switching, 141 passing unit tests, and community verification framework. — **MILESTONE 13 COMPLETE ✅**
+
+## M14 — P1 Ergonomics: Live Keystroke Glow Telemetry & Corner Lock/Touch ID Workflow Actions ⚡
+Goal: Provide immediate real-time visual tactile feedback on the visual keyboard canvas when physical keys are pressed, and empower users to assign high-productivity workflow actions to the Apple top-right corner key (Lock / Touch ID / Eject).
+- [x] `[T2]` M14.1 Live Keystroke Glow & Input Telemetry: Real-time visual keypress detection in `KeyboardViewState`, highlighting physically held keys with radiant electric cyan glow and displaying live key telemetry (VK code, key name, held count, Fn state). _(2026-10-31 — M14.1 completed)_
+- [x] `[T1]` M14.2 Corner Key (`Touch ID` / `Lock` / `Eject`) Workflow Actions in `crates/core`: Add `CornerKeyAction` (`LockWorkstation` [Win+L], `TaskView` [Win+Tab], `ShowDesktop` [Win+D], `Sleep`, `CustomShortcut`, `PassThrough`) to `Profile` / `Config` with compilation to `CompiledMappingTable` and comprehensive unit tests. _(2026-10-31 — M14.2 completed)_
+- [x] `[T2]` M14.3 Corner Key Settings UI & i18n: Expose Corner / Lock Key action dropdown selector in General Settings, with English and Italian translations. _(2026-10-31 — M14.3 completed)_
+- [x] `[T2]` M14.4 End-to-End Verification Gate & Autonomous QA: Run format, strict clippy, 142 unit tests, and autonomous `ui-qa-tester` session verifying 0 defects across 40 steps. _(2026-10-31 — M14.4 completed)_
+**Exit:** Real-time keypress glow with microsecond latency, zero frame lag, configurable Corner Lock/Touch ID actions across all profiles, 142 passing unit tests, and 0 findings in autonomous UI QA. — **MILESTONE 14 COMPLETE ✅**
+
+## M15 — On-Screen Display (OSD) Overlay & Native Windows Toast Notifications 🔮
+Goal: Provide visual HUD feedback outside the settings window and notify users of critical battery states.
+- [ ] `[T2]` M15.1 Translucent Windows 11-style OSD banner HUD for `Fn + Esc` Media/F-Key mode toggle.
+- [ ] `[T2]` M15.2 Native Windows 10/11 Toast Notifications for low battery thresholds (20% warning, 10% critical) and cable connect chime.
+**Exit:** Non-intrusive floating OSD on mode change and proactive battery toast alerts.
+
+## M16 — Per-Application Profile Auto-Switching 🔮
+Goal: Dynamically swap remapping profiles depending on which application currently has foreground focus.
+- [ ] `[T2]` M16.1 WinEvent hook (`EVENT_SYSTEM_FOREGROUND`) listener for active window changes.
+- [ ] `[T1]` M16.2 Process-to-profile binding schema in `Config` and serialization.
+- [ ] `[T2]` M16.3 Profile auto-switch UI management table in Settings GUI.
+**Exit:** Automatic zero-latency profile swapping when switching between IDEs, CAD/Design tools, and games.
+
+## M17 — GitHub Actions CI/CD Matrix, Automated Releases & WinGet PR Automation 🔮
+Goal: Automate continuous integration testing and release publishing on GitHub.
+- [ ] `[T1]` M17.1 GitHub Actions release workflow on git tag (`v*.*.*`) running full verification gate on Windows runners.
+- [ ] `[T1]` M17.2 Automated release asset packaging (Setup installer + portable ZIP) and SHA-256 generation.
+- [ ] `[T1]` M17.3 Automated WinGet package submission action to `microsoft/winget-pkgs`.
+**Exit:** One-command tag-driven release publishing with automated WinGet PRs.
+
+## M18 — Apple Peripheral Ecosystem: Magic Mouse Smooth Inertial Scrolling & Trackpad Gestures 🔮
+Goal: Extend MagicBridge driverless user-mode capabilities to Apple Magic Mouse and Magic Trackpad.
+- [ ] `[T3]` M18.1 User-mode raw HID touch surface listener for Apple Magic Mouse (`VID: 0x004C/0x05AC`).
+- [ ] `[T3]` M18.2 Smooth inertial wheel delta synthesis and horizontal scroll emulation.
+- [ ] `[T3]` M18.3 Apple Magic Trackpad user-mode gesture translation to Windows precision gestures.
+**Exit:** Silky-smooth scrolling for Magic Mouse and native multi-touch gestures without third-party kernel drivers.
+

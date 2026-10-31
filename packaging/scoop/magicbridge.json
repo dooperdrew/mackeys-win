@@ -6,7 +6,7 @@
     "architecture": {
         "64bit": {
             "url": "https://github.com/DooperDrew/magicbridge/releases/download/v0.4.0/MagicBridge-v0.4.0-windows-x64.zip",
-            "hash": "3710A913CCF37A3F73C77442260530EF19C0032BBDF8968140408FCD220B529F"
+            "hash": "A9414BD25A77F5ED45EBA34B2A36F9DDC5056FD25A25393651D2002A15363C7C"
         }
     },
     "bin": [

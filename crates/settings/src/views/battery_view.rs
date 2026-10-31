@@ -111,16 +111,25 @@ pub fn show(
         ui.add_space(4.0);
 
         // 5. Dynamic Battery Tray Badge Toggle (IMP-04)
-        let chk = ui
-            .checkbox(&mut config.battery_tray_badge, i18n.t("battery.tray_badge"))
-            .on_hover_text(i18n.t("battery.tray_badge_desc"));
-        crate::set_accessible_name(ui, chk.id, i18n.t("battery.tray_badge"));
-        if chk.changed() || chk.clicked() {
-            println!("[CONFIG] Battery tray badge toggled: applied OK");
-            let _ = std::io::stdout().flush();
-            ui.ctx().request_repaint();
-            modified = true;
-        }
+        ui.horizontal(|ui| {
+            let chk = ui
+                .checkbox(&mut config.battery_tray_badge, i18n.t("battery.tray_badge"))
+                .on_hover_text(i18n.t("battery.tray_badge_desc"));
+            crate::set_accessible_name(ui, chk.id, i18n.t("battery.tray_badge"));
+
+            if config.battery_tray_badge {
+                ui.colored_label(Color32::from_rgb(0, 180, 100), "✓ Active");
+            } else {
+                ui.colored_label(Color32::from_rgb(140, 150, 160), "○ Disabled");
+            }
+
+            if chk.changed() || chk.clicked() {
+                println!("[CONFIG] Battery tray badge toggled: applied OK");
+                let _ = std::io::stdout().flush();
+                ui.ctx().request_repaint();
+                modified = true;
+            }
+        });
 
         ui.separator();
 

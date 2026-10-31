@@ -205,6 +205,54 @@ impl fmt::Display for FnKeyChoice {
     }
 }
 
+/// User-configurable workflow action for the Apple top-right corner key (Lock / Touch ID / Eject).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CornerKeyAction {
+    /// Lock Windows workstation (Win + L) — matches standard Apple lock behavior.
+    #[default]
+    #[serde(alias = "lock_workstation", alias = "lock", alias = "LockWorkstation")]
+    LockWorkstation,
+    /// Open Windows Task View (Win + Tab).
+    #[serde(alias = "task_view", alias = "TaskView")]
+    TaskView,
+    /// Toggle Show Desktop (Win + D).
+    #[serde(alias = "show_desktop", alias = "ShowDesktop")]
+    ShowDesktop,
+    /// Put PC to Sleep (Win32 suspend).
+    #[serde(alias = "sleep", alias = "Sleep")]
+    Sleep,
+    /// Pass through the original hardware key unmodified.
+    #[serde(alias = "passthrough", alias = "none", alias = "PassThrough")]
+    PassThrough,
+}
+
+impl CornerKeyAction {
+    /// Returns all available corner key actions in display order.
+    #[must_use]
+    pub const fn all() -> &'static [Self] {
+        &[
+            Self::LockWorkstation,
+            Self::TaskView,
+            Self::ShowDesktop,
+            Self::Sleep,
+            Self::PassThrough,
+        ]
+    }
+}
+
+impl fmt::Display for CornerKeyAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::LockWorkstation => f.write_str("Lock Workstation (Win+L)"),
+            Self::TaskView => f.write_str("Task View (Win+Tab)"),
+            Self::ShowDesktop => f.write_str("Show Desktop (Win+D)"),
+            Self::Sleep => f.write_str("Sleep PC"),
+            Self::PassThrough => f.write_str("Pass-through"),
+        }
+    }
+}
+
 /// Destination action for a remapped key (F5.1).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -292,6 +340,9 @@ pub struct NamedProfile {
     /// Configured Fn trigger key.
     #[serde(default)]
     pub fn_key: FnKeyChoice,
+    /// Action for the top-right corner key (Lock / Touch ID / Eject).
+    #[serde(default)]
+    pub corner_key_action: CornerKeyAction,
     /// Normal layer key remappings (e.g. "F13" -> "PrintScreen").
     #[serde(default)]
     pub mappings: BTreeMap<String, KeyAction>,
@@ -310,6 +361,7 @@ impl NamedProfile {
             modifier_preset: ModifierPreset::default(),
             top_row_mode: TopRowMode::default(),
             fn_key: FnKeyChoice::default(),
+            corner_key_action: CornerKeyAction::default(),
             mappings: BTreeMap::new(),
             fn_mappings: BTreeMap::new(),
         }
@@ -341,6 +393,7 @@ impl NamedProfile {
             modifier_preset: ModifierPreset::WindowsLayout,
             top_row_mode: TopRowMode::MediaKeysFirst,
             fn_key: FnKeyChoice::RightOption,
+            corner_key_action: CornerKeyAction::LockWorkstation,
             mappings,
             fn_mappings,
         }

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 use egui::Ui;
 use magicbridge_agent::autostart;
-use magicbridge_core::{AppleModelId, Config, NamedProfile, ThemeMode};
+use magicbridge_core::{AppleModelId, Config, CornerKeyAction, NamedProfile, ThemeMode};
 
 use crate::i18n::I18n;
 use crate::ipc::SettingsIpc;
@@ -137,6 +137,47 @@ pub fn show(
                 modified = true;
             }
         });
+
+        // 4. Corner / Lock Key Workflow (Touch ID / Lock / Eject)
+        if let Some(prof) = config.active_profile_mut() {
+            ui.horizontal(|ui| {
+                ui.label(i18n.t("general.corner_key_action"));
+                let current_label = match prof.corner_key_action {
+                    CornerKeyAction::LockWorkstation => i18n.t("general.corner_key_lock"),
+                    CornerKeyAction::TaskView => i18n.t("general.corner_key_task_view"),
+                    CornerKeyAction::ShowDesktop => i18n.t("general.corner_key_show_desktop"),
+                    CornerKeyAction::Sleep => i18n.t("general.corner_key_sleep"),
+                    CornerKeyAction::PassThrough => i18n.t("general.corner_key_passthrough"),
+                };
+                let combo = egui::ComboBox::from_id_salt("ui_corner_key_action_combo")
+                    .selected_text(current_label)
+                    .show_ui(ui, |ui| {
+                        for action in CornerKeyAction::all() {
+                            let label = match action {
+                                CornerKeyAction::LockWorkstation => {
+                                    i18n.t("general.corner_key_lock")
+                                }
+                                CornerKeyAction::TaskView => i18n.t("general.corner_key_task_view"),
+                                CornerKeyAction::ShowDesktop => {
+                                    i18n.t("general.corner_key_show_desktop")
+                                }
+                                CornerKeyAction::Sleep => i18n.t("general.corner_key_sleep"),
+                                CornerKeyAction::PassThrough => {
+                                    i18n.t("general.corner_key_passthrough")
+                                }
+                            };
+                            ui.selectable_value(&mut prof.corner_key_action, *action, label);
+                        }
+                    });
+                let res = combo
+                    .response
+                    .on_hover_text(i18n.t("general.corner_key_action_tooltip"));
+                crate::set_accessible_name(ui, res.id, i18n.t("general.corner_key_action"));
+                if res.changed() {
+                    modified = true;
+                }
+            });
+        }
 
         ui.separator();
 

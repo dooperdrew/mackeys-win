@@ -10,7 +10,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::config::{
-    CustomAction, FnKeyChoice, KeyAction, ModifierPreset, NamedProfile, TopRowMode,
+    CornerKeyAction, CustomAction, FnKeyChoice, KeyAction, ModifierPreset, NamedProfile, TopRowMode,
 };
 use crate::key::{
     Key, SC_ISO_ALTGR_SYNTHETIC_LCTRL, VK_BACK, VK_DELETE, VK_DOWN, VK_END, VK_F3, VK_F4, VK_F7,
@@ -382,6 +382,43 @@ pub fn compile_profile(profile: &NamedProfile) -> CompiledMappingTable {
     fn_layer[VK_DOWN as usize] = RemapAction::from_vk(VK_NEXT);
     fn_layer[VK_BACK as usize] = RemapAction::from_vk(VK_DELETE);
     fn_layer[VK_RETURN as usize] = RemapAction::from_vk(VK_INSERT);
+
+    // 4.5. Corner Key Action (Lock / Touch ID / Eject)
+    let corner_action = match profile.corner_key_action {
+        CornerKeyAction::LockWorkstation => {
+            // Win + L
+            Some(RemapAction::shortcut(&[
+                Key::from_vk(VK_LWIN),
+                Key::from_vk(0x4C),
+            ]))
+        }
+        CornerKeyAction::TaskView => {
+            // Win + Tab
+            Some(RemapAction::shortcut(&[
+                Key::from_vk(VK_LWIN),
+                Key::from_vk(VK_TAB),
+            ]))
+        }
+        CornerKeyAction::ShowDesktop => {
+            // Win + D
+            Some(RemapAction::shortcut(&[
+                Key::from_vk(VK_LWIN),
+                Key::from_vk(0x44),
+            ]))
+        }
+        CornerKeyAction::Sleep => {
+            let idx = custom_actions.len() as u32;
+            custom_actions.push(CustomAction::Launch {
+                command: "rundll32.exe powrprof.dll,SetSuspendState 0,1,0".to_string(),
+            });
+            Some(RemapAction::CustomAction(idx))
+        }
+        CornerKeyAction::PassThrough => None,
+    };
+
+    if let Some(action) = corner_action {
+        normal_layer[VK_SNAPSHOT as usize] = action;
+    }
 
     // 5. Apply Profile Normal Layer Mappings (overrides defaults)
     for (src_name, action) in &profile.mappings {
@@ -839,5 +876,62 @@ mod tests {
                 extended: true,
             }
         );
+    }
+
+    #[test]
+    fn test_corner_key_action_compilation() {
+        let mut profile = NamedProfile::default_it();
+
+        // 1. Lock Workstation (Win + L)
+        profile.corner_key_action = CornerKeyAction::LockWorkstation;
+        let table_lock = compile_profile(&profile);
+        let action = table_lock.lookup(VK_SNAPSHOT, false);
+        assert!(action.is_shortcut());
+        let keys = action.shortcut_keys().unwrap();
+        assert_eq!(keys[0], Key::from_vk(VK_LWIN));
+        assert_eq!(keys[1], Key::from_vk(0x4C));
+
+        // 2. Task View (Win + Tab)
+        profile.corner_key_action = CornerKeyAction::TaskView;
+        let table_tv = compile_profile(&profile);
+        let action = table_tv.lookup(VK_SNAPSHOT, false);
+        assert!(action.is_shortcut());
+        let keys = action.shortcut_keys().unwrap();
+        assert_eq!(keys[0], Key::from_vk(VK_LWIN));
+        assert_eq!(keys[1], Key::from_vk(VK_TAB));
+
+        // 3. Show Desktop (Win + D)
+        profile.corner_key_action = CornerKeyAction::ShowDesktop;
+        let table_sd = compile_profile(&profile);
+        let action = table_sd.lookup(VK_SNAPSHOT, false);
+        assert!(action.is_shortcut());
+        let keys = action.shortcut_keys().unwrap();
+        assert_eq!(keys[0], Key::from_vk(VK_LWIN));
+        assert_eq!(keys[1], Key::from_vk(0x44));
+
+        // 4. Sleep
+        profile.corner_key_action = CornerKeyAction::Sleep;
+        let table_sleep = compile_profile(&profile);
+        let action = table_sleep.lookup(VK_SNAPSHOT, false);
+        assert!(matches!(action, RemapAction::CustomAction(_)));
+
+        // 5. Pass-through
+        profile.corner_key_action = CornerKeyAction::PassThrough;
+        let table_pt = compile_profile(&profile);
+        assert_eq!(
+            table_pt.lookup(VK_SNAPSHOT, false),
+            RemapAction::PassThrough
+        );
+
+        // 6. Explicit mapping overrides corner_key_action
+        profile.corner_key_action = CornerKeyAction::LockWorkstation;
+        profile
+            .mappings
+            .insert("Snapshot".to_string(), KeyAction::key("F20"));
+        let table_override = compile_profile(&profile);
+        assert_eq!(
+            table_override.lookup(VK_SNAPSHOT, false),
+            RemapAction::from_vk(0x83)
+        ); // VK_F20
     }
 }
