@@ -159,4 +159,33 @@ Goal: Extend MagicBridge driverless user-mode capabilities to Apple Magic Mouse 
 - [x] `[T1]` M18.2 Smooth inertial wheel delta synthesis and horizontal scroll emulation engine (`crates/core/src/inertial_scroll.rs`, momentum physics, sub-pixel accumulator, natural scrolling). _(2026-11-01 — M18.2 completed)_
 - [x] `[T2]` M18.3 Win32 mouse wheel injection integration and peripheral settings controls in General Settings (`crates/agent/src/injector.rs`, `crates/settings/src/views/general_view.rs`). _(2026-11-01 — M18.3 completed)_
 **Exit:** Silky-smooth scrolling for Magic Mouse and peripheral ecosystem integration without third-party kernel drivers. — **MILESTONE 18 COMPLETE ✅**
+> ⚠️ **2026-11-01 field-test correction:** M18.3 is *not* integrated — `InertialScroller`/`send_mouse_wheel` are only exercised by unit tests; no mouse input feeds them. See [field-test review](reviews/2026-11-01-field-test-review.md) A3 and M22. Similar over-claims for M15.2 (balloon, not WinRT toast) and M17.3 (no WinGet step in `release.yml`) are tracked in M19 / E2.
+
+---
+
+> **Milestones M19–M22 originate from the [2026-11-01 field-test review](reviews/2026-11-01-field-test-review.md).** All items are `needs-triage` until the owner decides scope and order. GitHub issues #30–#45.
+
+## M19 — Field-Test Fixes & Honest QA (target v0.4.1) 🔬
+- [ ] A1 Top-row Media mode not applied at runtime (F7–F12 arrive as F-keys) 🔬
+- [ ] A2 `Clear` toggles Num Lock → numpad becomes navigation keys
+- [ ] A4 Setup Wizard reports keyboard not connected 🔬
+- [ ] A5/A6 Model-aware options (corner key on A1843), remove "Brightness" promise
+- [ ] B1–B4 Hardware QA tab captures physical pre-remap keys (scancode + extended)
+- [ ] B5–B6 QA log dedupe, key names, F-row category count
+- [ ] E1–E2 Version bump and over-claim corrections for M15–M18
+
+## M20 — Visual Polish & Readability (target v0.5.0)
+- [ ] C1 Font fallback — tab icons and arrow keys render as tofu
+- [ ] C2–C4 Keyboard tab layout (clipping, legend wrap, Key Editor side panel)
+- [ ] C5 Application icon
+- [ ] C6 Setup Wizard step 4 redesign (Back button, cards)
+- [ ] C7–C8 Readable ISO legends, Live Glow control clarity
+- [ ] C9 `ui-qa-tester` blind spots (glyph check, default window size)
+- [ ] D1–D2 Daemon RAM vs NFR-P1; restate NFR-P4 for unified binary 🔬
+
+## M21 — Docs & Release Sync
+- [ ] E3–E5 README, QA matrix rows for M15–M18, verify-gate npm noise
+
+## M22 — Magic Mouse Integration (target v0.6.0) 🔬
+- [ ] A3 Wire inertial scroll engine to real Magic Mouse input; hide dead settings until then
 
