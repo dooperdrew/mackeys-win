@@ -170,8 +170,10 @@ pub fn show(
                         modified = true;
                     }
 
-                    // 4. Corner / Lock Key Workflow (Touch ID / Lock / Eject)
-                    if let Some(prof) = config.active_profile_mut() {
+                    // 4. Corner / Lock Key Workflow (Touch ID / Lock / Eject - Compact models only)
+                    if config.keyboard_model.has_corner_key()
+                        && let Some(prof) = config.active_profile_mut()
+                    {
                         ui.horizontal(|ui| {
                             let label = i18n.t("general.corner_key_action");
                             ui.label(label);

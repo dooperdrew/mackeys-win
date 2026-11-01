@@ -57,11 +57,18 @@ pub fn ensure_daemon_running() {
         return;
     }
 
-    if let Ok(exe_path) = std::env::current_exe() {
-        let mut cmd = Command::new(&exe_path);
-        cmd.arg("--daemon");
-        let _ = cmd.spawn();
-    }
+    let installed_exe = default_install_dir().join("magicbridge.exe");
+    let exe_to_run = if installed_exe.exists() {
+        installed_exe
+    } else if let Ok(exe_path) = std::env::current_exe() {
+        exe_path
+    } else {
+        return;
+    };
+
+    let mut cmd = Command::new(&exe_to_run);
+    cmd.arg("--daemon");
+    let _ = cmd.spawn();
 }
 
 /// Options selected in the installer wizard GUI.
@@ -432,10 +439,8 @@ impl Default for InstallerApp {
         let default_dir = default_install_dir();
         let already_installed = default_dir.join("magicbridge.exe").exists();
         let detected_layout = crate::detect_windows_keyboard_layout();
-        let ipc = crate::ipc::SettingsIpc::new();
-        let status = ipc.query_status();
 
-        Self {
+        let mut app = Self {
             step: SetupStep::Welcome,
             welcome_action: WelcomeAction::InstallOrUpgrade,
             already_installed,
@@ -444,15 +449,17 @@ impl Default for InstallerApp {
             install_progress: 0.0,
             install_status_text: String::from("Ready to install"),
             install_error: None,
-            selected_model: magicbridge_agent::detect_connected_apple_model().unwrap_or_default(),
+            selected_model: magicbridge_core::AppleModelId::default(),
             selected_layout: detected_layout,
             selected_modifier: ModifierPreset::WindowsLayout,
             selected_fn_key: FnKeyChoice::RightOption,
             media_keys_first: true,
-            is_connected_probe: status.as_ref().is_some_and(|s| s.is_connected),
-            battery_probe: status.as_ref().and_then(|s| s.battery_percent),
+            is_connected_probe: false,
+            battery_probe: None,
             custom_path_str: default_dir.display().to_string(),
-        }
+        };
+        app.refresh_hardware_probe();
+        app
     }
 }
 
@@ -476,6 +483,28 @@ impl App for InstallerApp {
 }
 
 impl InstallerApp {
+    /// Refreshes keyboard connection status and battery state from IPC or direct HID probing.
+    pub fn refresh_hardware_probe(&mut self) {
+        let ipc = crate::ipc::SettingsIpc::new();
+        if let Some(status) = ipc.query_status() {
+            self.is_connected_probe = status.is_connected;
+            self.battery_probe = status.battery_percent;
+            if let Some(detected) = magicbridge_agent::detect_connected_apple_model() {
+                self.selected_model = detected;
+            }
+        } else {
+            // Daemon is not running yet during installation wizard: probe hardware directly!
+            let detected = magicbridge_agent::detect_connected_apple_model();
+            let keyboards = magicbridge_agent::probe_connected_apple_keyboards();
+            self.is_connected_probe = detected.is_some() || !keyboards.is_empty();
+            if let Some(m) = detected {
+                self.selected_model = m;
+            }
+            self.battery_probe =
+                magicbridge_agent::query_battery(&std::collections::HashSet::new())
+                    .map(|b| b.percentage);
+        }
+    }
     fn render_step_welcome(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.heading("Welcome to the MagicBridge Setup Wizard");
         ui.add_space(4.0);
@@ -687,14 +716,18 @@ impl InstallerApp {
 
         // Hardware detection indicator
         egui::Frame::group(ui.style())
-            .fill(Color32::from_rgb(240, 248, 242))
+            .fill(if self.is_connected_probe {
+                Color32::from_rgb(240, 248, 242)
+            } else {
+                Color32::from_rgb(255, 250, 240)
+            })
             .corner_radius(CornerRadius::same(6))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     if self.is_connected_probe {
                         ui.colored_label(
                             Color32::from_rgb(40, 160, 60),
-                            "✔ Apple Magic Keyboard Detected",
+                            format!("✔ Connected: {}", self.selected_model.display_name()),
                         );
                         if let Some(pct) = self.battery_probe {
                             ui.label(format!("(Battery: {pct}%)"));
@@ -724,10 +757,8 @@ impl InstallerApp {
                 .response
                 .on_hover_text("Select your Apple keyboard model or click Auto-Detect");
 
-            if ui.button("🔍 Auto-Detect Model").clicked()
-                && let Some(detected) = magicbridge_agent::detect_connected_apple_model()
-            {
-                self.selected_model = detected;
+            if ui.button("🔍 Auto-Detect Model").clicked() {
+                self.refresh_hardware_probe();
             }
         });
 
@@ -893,7 +924,7 @@ impl InstallerApp {
         ui.add_space(4.0);
         ui.checkbox(
             &mut self.media_keys_first,
-            "Top row keys default to Media controls (Play/Pause, Volume, Brightness)",
+            "Top row keys default to Media controls (Play/Pause, Volume, Next/Prev Track)",
         );
 
         ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
@@ -929,7 +960,16 @@ impl InstallerApp {
                         let _ = atomic_write(&config_path, toml_str);
                     }
 
+                    // Reload running daemon or ensure it is running
+                    let ipc = crate::ipc::SettingsIpc::new();
+                    let _ = ipc.reload_config();
+                    ensure_daemon_running();
+
                     self.step = SetupStep::Finished;
+                }
+
+                if ui.button("< Back").clicked() {
+                    self.step = SetupStep::Options;
                 }
             });
             ui.separator();
@@ -1103,7 +1143,10 @@ pub fn run_installer_gui() -> Result<(), eframe::Error> {
     eframe::run_native(
         "MagicBridge Setup Wizard",
         native_options,
-        Box::new(|_cc| Ok(Box::new(InstallerApp::default()))),
+        Box::new(|cc| {
+            crate::setup_custom_fonts(&cc.egui_ctx);
+            Ok(Box::new(InstallerApp::default()))
+        }),
     )
 }
 
@@ -1119,6 +1162,9 @@ pub fn run_uninstaller_gui() -> Result<(), eframe::Error> {
     eframe::run_native(
         "MagicBridge Uninstaller",
         native_options,
-        Box::new(|_cc| Ok(Box::new(UninstallerApp::default()))),
+        Box::new(|cc| {
+            crate::setup_custom_fonts(&cc.egui_ctx);
+            Ok(Box::new(UninstallerApp::default()))
+        }),
     )
 }

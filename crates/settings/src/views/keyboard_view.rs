@@ -366,8 +366,8 @@ pub fn show(
 
     ui.separator();
 
-    // 2. Toolbar: Layer Switch, Presets, "Press a key to select" (Issue #14: horizontal wrapping)
-    ui.horizontal_wrapped(|ui| {
+    // 2. Toolbar: Row A (Controls) and Row B (Scale & Legend)
+    ui.horizontal(|ui| {
         ui.label(i18n.t("keyboard.layer"));
         ui.selectable_value(
             &mut state.active_layer,
@@ -430,27 +430,6 @@ pub fn show(
 
         ui.separator();
 
-        // Color legend indicators
-        ui.colored_label(Color32::from_rgb(45, 125, 210), "■");
-        ui.label(i18n.t("keyboard.legend_remapped"));
-        ui.colored_label(Color32::from_rgb(40, 160, 100), "■");
-        ui.label(i18n.t("keyboard.legend_swapped"));
-        ui.colored_label(Color32::from_rgb(180, 100, 40), "■");
-        ui.label(i18n.t("keyboard.legend_fn_trigger"));
-        ui.colored_label(Color32::from_rgb(230, 170, 0), "■");
-        ui.label(i18n.t("keyboard.legend_selected"));
-
-        ui.separator();
-
-        // Keyboard Canvas Zoom / Scale Control
-        ui.label(i18n.t("keyboard.zoom_label"));
-        ui.selectable_value(&mut state.canvas_scale, 0.0, i18n.t("keyboard.zoom_fit"));
-        ui.selectable_value(&mut state.canvas_scale, 0.9, "90%");
-        ui.selectable_value(&mut state.canvas_scale, 1.0, "100%");
-        ui.selectable_value(&mut state.canvas_scale, 1.15, "115%");
-
-        ui.separator();
-
         // Live Keystroke Glow toggle & Telemetry
         let glow_toggle = ui
             .toggle_value(&mut state.live_keystroke_glow, "⚡ Live Glow")
@@ -473,9 +452,31 @@ pub fn show(
                     ),
                 );
             } else {
-                ui.colored_label(Color32::from_rgb(140, 150, 160), "⚡ Live Ready");
+                ui.colored_label(Color32::from_rgb(140, 150, 160), "⚡ Active");
             }
         }
+    });
+
+    // Toolbar Row B: Scale Control and Legend Bar (prevents awkward line wrapping)
+    ui.horizontal(|ui| {
+        // Keyboard Canvas Zoom / Scale Control
+        ui.label(i18n.t("keyboard.zoom_label"));
+        ui.selectable_value(&mut state.canvas_scale, 0.0, i18n.t("keyboard.zoom_fit"));
+        ui.selectable_value(&mut state.canvas_scale, 0.9, "90%");
+        ui.selectable_value(&mut state.canvas_scale, 1.0, "100%");
+        ui.selectable_value(&mut state.canvas_scale, 1.15, "115%");
+
+        ui.separator();
+
+        // Color legend indicators
+        ui.colored_label(Color32::from_rgb(45, 125, 210), "■");
+        ui.label(i18n.t("keyboard.legend_remapped"));
+        ui.colored_label(Color32::from_rgb(40, 160, 100), "■");
+        ui.label(i18n.t("keyboard.legend_swapped"));
+        ui.colored_label(Color32::from_rgb(180, 100, 40), "■");
+        ui.label(i18n.t("keyboard.legend_fn_trigger"));
+        ui.colored_label(Color32::from_rgb(230, 170, 0), "■");
+        ui.label(i18n.t("keyboard.legend_selected"));
     });
 
     // Handle "Press a key to select" keyboard listener
@@ -559,8 +560,12 @@ pub fn calculate_unit_size_for_model(
     form_factor: magicbridge_core::KeyboardModelType,
 ) -> f32 {
     match form_factor {
-        magicbridge_core::KeyboardModelType::FullSize => (available_width / 24.5).clamp(20.0, 42.0),
-        magicbridge_core::KeyboardModelType::Compact => (available_width / 16.0).clamp(24.0, 50.0),
+        magicbridge_core::KeyboardModelType::FullSize => {
+            ((available_width - 24.0) / 25.5).clamp(18.0, 42.0)
+        }
+        magicbridge_core::KeyboardModelType::Compact => {
+            ((available_width - 16.0) / 16.5).clamp(22.0, 50.0)
+        }
     }
 }
 
@@ -1561,12 +1566,12 @@ mod tests {
 
     #[test]
     fn test_calculate_unit_size_responsive_clamping() {
-        // Narrow/compact display: clamped to 20.0 minimum
-        assert_eq!(calculate_unit_size(400.0), 20.0);
-        assert_eq!(calculate_unit_size(480.0), 20.0);
+        // Narrow/compact display: clamped to 18.0 minimum
+        assert_eq!(calculate_unit_size(400.0), 18.0);
+        assert_eq!(calculate_unit_size(480.0), 18.0);
 
-        // Standard 1080p window width (~735px -> 30.0)
-        let standard_unit = calculate_unit_size(735.0);
+        // Standard 1080p window width (~789px -> 30.0)
+        let standard_unit = calculate_unit_size(789.0);
         assert!((standard_unit - 30.0).abs() < 0.01);
 
         // Wide display: 1200px -> clamped to 42.0 maximum

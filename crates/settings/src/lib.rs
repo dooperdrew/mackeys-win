@@ -20,6 +20,43 @@ pub use keyboard_model::{A1843Model, KeyCluster, PhysicalKey};
 pub use views::qa_view::HardwareQaViewState;
 pub use views::wizard_view::{OnboardingWizardState, WizardAction};
 
+/// Configures native Windows fallback fonts (Segoe UI Symbol, Segoe UI Emoji)
+/// so arrows, symbols, and icons render crisp and complete without tofu (□) squares.
+pub fn setup_custom_fonts(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+
+    #[cfg(target_os = "windows")]
+    {
+        // 1. Segoe UI Symbol: provides arrows (←, →, ↑, ↓), math symbols, UI glyphs
+        if let Ok(data) = std::fs::read(r"C:\Windows\Fonts\seguisym.ttf") {
+            fonts.font_data.insert(
+                "segoe_ui_symbol".to_owned(),
+                std::sync::Arc::new(egui::FontData::from_owned(data)),
+            );
+            fonts
+                .families
+                .entry(egui::FontFamily::Proportional)
+                .or_default()
+                .push("segoe_ui_symbol".to_owned());
+        }
+
+        // 2. Segoe UI Emoji: provides full Unicode emoji coverage
+        if let Ok(data) = std::fs::read(r"C:\Windows\Fonts\seguiemj.ttf") {
+            fonts.font_data.insert(
+                "segoe_ui_emoji".to_owned(),
+                std::sync::Arc::new(egui::FontData::from_owned(data)),
+            );
+            fonts
+                .families
+                .entry(egui::FontFamily::Proportional)
+                .or_default()
+                .push("segoe_ui_emoji".to_owned());
+        }
+    }
+
+    ctx.set_fonts(fonts);
+}
+
 /// Helper to map a Windows Language ID (LANGID) to a `KeyboardLayout`.
 #[must_use]
 pub fn lang_id_to_keyboard_layout(

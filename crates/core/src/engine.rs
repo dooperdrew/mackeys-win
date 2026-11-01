@@ -13,12 +13,12 @@ use crate::config::{
     CornerKeyAction, CustomAction, FnKeyChoice, KeyAction, ModifierPreset, NamedProfile, TopRowMode,
 };
 use crate::key::{
-    Key, SC_ISO_ALTGR_SYNTHETIC_LCTRL, VK_BACK, VK_DELETE, VK_DOWN, VK_END, VK_F3, VK_F4, VK_F7,
-    VK_F8, VK_F9, VK_F10, VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F19, VK_HOME, VK_INSERT,
-    VK_LCONTROL, VK_LEFT, VK_LMENU, VK_LWIN, VK_MEDIA_NEXT_TRACK, VK_MEDIA_PLAY_PAUSE,
-    VK_MEDIA_PREV_TRACK, VK_NEXT, VK_PAUSE, VK_PRIOR, VK_RCONTROL, VK_RETURN, VK_RIGHT, VK_RMENU,
-    VK_RWIN, VK_SCROLL, VK_SNAPSHOT, VK_TAB, VK_UP, VK_VOLUME_DOWN, VK_VOLUME_MUTE, VK_VOLUME_UP,
-    parse_key_name,
+    Key, SC_ISO_ALTGR_SYNTHETIC_LCTRL, VK_BACK, VK_DELETE, VK_DOWN, VK_END, VK_ESCAPE, VK_F3,
+    VK_F4, VK_F7, VK_F8, VK_F9, VK_F10, VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F19, VK_HOME,
+    VK_INSERT, VK_LCONTROL, VK_LEFT, VK_LMENU, VK_LWIN, VK_MEDIA_NEXT_TRACK, VK_MEDIA_PLAY_PAUSE,
+    VK_MEDIA_PREV_TRACK, VK_NEXT, VK_NUMLOCK, VK_PAUSE, VK_PRIOR, VK_RCONTROL, VK_RETURN, VK_RIGHT,
+    VK_RMENU, VK_RWIN, VK_SCROLL, VK_SNAPSHOT, VK_TAB, VK_UP, VK_VOLUME_DOWN, VK_VOLUME_MUTE,
+    VK_VOLUME_UP, parse_key_name,
 };
 
 /// Action resulting from evaluating an intercepted keyboard event.
@@ -321,10 +321,16 @@ pub fn compile_profile(profile: &NamedProfile) -> CompiledMappingTable {
     normal_layer[VK_F13 as usize] = prt_sc;
     normal_layer[VK_F14 as usize] = scr_lk;
     normal_layer[VK_F15 as usize] = pause;
+    // Clear key on Apple A1843/A2520 numpad sends VK_NUMLOCK (0x90).
+    // In macOS, Clear never toggles the numpad off into navigation keys.
+    // Default to Escape so Clear cancels/escapes without disabling NumLock.
+    let clear_esc = RemapAction::from_vk(VK_ESCAPE);
+    normal_layer[VK_NUMLOCK as usize] = clear_esc;
 
     fn_layer[VK_F13 as usize] = prt_sc;
     fn_layer[VK_F14 as usize] = scr_lk;
     fn_layer[VK_F15 as usize] = pause;
+    fn_layer[VK_NUMLOCK as usize] = clear_esc;
 
     // 3. Top Row Mode (F2.1..F2.5)
     // F3: Mission Control -> Windows Task View (Win + Tab)
@@ -551,6 +557,15 @@ mod tests {
             RemapAction::RemapKey {
                 target_vk: VK_PAUSE,
                 target_sc: 0x45,
+                extended: false,
+            }
+        );
+        // Clear key (VK_NUMLOCK = 0x90) maps to Escape to prevent numpad navigation fallback
+        assert_eq!(
+            table.lookup(VK_NUMLOCK, false),
+            RemapAction::RemapKey {
+                target_vk: VK_ESCAPE,
+                target_sc: 0x01,
                 extended: false,
             }
         );

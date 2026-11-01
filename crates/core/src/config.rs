@@ -377,6 +377,7 @@ impl NamedProfile {
         mappings.insert("F13".to_string(), KeyAction::key("PrintScreen"));
         mappings.insert("F14".to_string(), KeyAction::key("ScrollLock"));
         mappings.insert("F15".to_string(), KeyAction::key("Pause"));
+        mappings.insert("Clear".to_string(), KeyAction::key("Escape"));
 
         let mut fn_mappings = BTreeMap::new();
         // F1.2 default Fn combos
@@ -516,6 +517,12 @@ impl AppleModelId {
             | Self::A1314
             | Self::GenericApple => KeyboardModelType::Compact,
         }
+    }
+
+    /// Returns `true` if this keyboard model has a dedicated top-right corner key (Lock / Touch ID / Eject).
+    #[must_use]
+    pub const fn has_corner_key(&self) -> bool {
+        matches!(self.form_factor(), KeyboardModelType::Compact)
     }
 
     /// Returns human-readable display name for this model.

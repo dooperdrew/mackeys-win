@@ -67,7 +67,8 @@ pub struct MagicBridgeApp {
 impl MagicBridgeApp {
     /// Creates and initializes the settings application state.
     #[must_use]
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        crate::setup_custom_fonts(&cc.egui_ctx);
         let config_path = default_config_path().unwrap_or_else(|_| PathBuf::from("config.toml"));
         let config = Config::load_from_path(&config_path).unwrap_or_default();
         let i18n = I18n::new(&config.ui_language);
@@ -419,8 +420,19 @@ impl App for MagicBridgeApp {
             crate::set_accessible_name(ui, scroll_output.id, "Settings Content Area");
         });
 
-        // Request a repaint periodically to update battery/connection status
-        ctx.request_repaint_after(Duration::from_millis(1500));
+        // Fast repaint during active Hardware QA listening; periodic otherwise
+        if self.current_tab == SettingsTab::HardwareQa && self.qa_state.is_listening {
+            ctx.request_repaint_after(Duration::from_millis(50));
+        } else {
+            qa_view::remove_qa_hook();
+            ctx.request_repaint_after(Duration::from_millis(1500));
+        }
+    }
+}
+
+impl Drop for MagicBridgeApp {
+    fn drop(&mut self) {
+        qa_view::remove_qa_hook();
     }
 }
 

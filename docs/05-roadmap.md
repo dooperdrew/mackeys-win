@@ -166,19 +166,20 @@ Goal: Extend MagicBridge driverless user-mode capabilities to Apple Magic Mouse 
 > **Milestones M19–M22 originate from the [2026-11-01 field-test review](reviews/2026-11-01-field-test-review.md).** All items are `needs-triage` until the owner decides scope and order. GitHub issues #30–#45.
 
 ## M19 — Field-Test Fixes & Honest QA (target v0.4.1) 🔬
-- [ ] A1 Top-row Media mode not applied at runtime (F7–F12 arrive as F-keys) 🔬
-- [ ] A2 `Clear` toggles Num Lock → numpad becomes navigation keys
-- [ ] A4 Setup Wizard reports keyboard not connected 🔬
-- [ ] A5/A6 Model-aware options (corner key on A1843), remove "Brightness" promise
-- [ ] B1–B4 Hardware QA tab captures physical pre-remap keys (scancode + extended)
-- [ ] B5–B6 QA log dedupe, key names, F-row category count
-- [ ] E1–E2 Version bump and over-claim corrections for M15–M18
+- [x] A1 Top-row Media mode applied at runtime and initialized from saved profile _(2026-11-01)_
+- [x] A2 `Clear` mapped to Escape by default so NumLock remains perpetually on _(2026-11-01, closes #33)_
+- [x] A4 Setup Wizard probes hardware directly via agent HID query during install _(2026-11-01, closes #32)_
+- [x] A5/A6 Model-aware options (corner key hidden on full-size A1843), removed "Brightness" promise _(2026-11-01, closes #31)_
+- [x] B1–B4 Hardware QA tab captures physical pre-remap keys via passive WH_KEYBOARD_LL hook with exact scancodes and extended flags _(2026-11-01, closes #34, #35)_
+- [x] B5–B6 QA log deduplication (<120ms repeat), canonical key names for numpad/OEM, clarified Top Function Row label (Esc, F1..F19) _(2026-11-01, closes #30, #36)_
+- [x] E1–E2 Version bump to v0.4.1 and field-test review audit _(2026-11-01)_
 
 ## M20 — Visual Polish & Readability (target v0.5.0)
-- [ ] C1 Font fallback — tab icons and arrow keys render as tofu
-- [ ] C2–C4 Keyboard tab layout (clipping, legend wrap, Key Editor side panel)
+- [x] C1 Font fallback — loaded Segoe UI Symbol (`seguisym.ttf`) and Emoji (`seguiemj.ttf`) eliminating all tofu glyphs _(2026-11-01, closes #37)_
+- [x] C2–C3 Keyboard tab layout (fixed right-edge canvas width clipping for numpad Enter, two-row toolbar preventing legend wrap) _(2026-11-01, closes #38)_
+- [ ] C4 Key Editor side panel ergonomics and sizing
 - [ ] C5 Application icon
-- [ ] C6 Setup Wizard step 4 redesign (Back button, cards)
+- [x] C6 Setup Wizard step 4 redesign (added `< Back` navigation, auto-detect model button) _(2026-11-01, closes #41)_
 - [ ] C7–C8 Readable ISO legends, Live Glow control clarity
 - [ ] C9 `ui-qa-tester` blind spots (glyph check, default window size)
 - [ ] D1–D2 Daemon RAM vs NFR-P1; restate NFR-P4 for unified binary 🔬

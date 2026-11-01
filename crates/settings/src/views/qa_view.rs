@@ -10,6 +10,9 @@
 use std::collections::{HashSet, VecDeque};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Mutex;
+#[cfg(windows)]
+use std::sync::atomic::{AtomicIsize, Ordering};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use egui::{
@@ -135,6 +138,8 @@ pub struct HardwareQaViewState {
     pub export_status: Option<(bool, String)>,
     /// Active category filter for highlighting (None = show all).
     pub selected_category: Option<QaCategory>,
+    /// Last verified key ID and timestamp for deduplicating fast hardware auto-repeat.
+    pub last_key: Option<(String, Instant)>,
 }
 
 impl Default for HardwareQaViewState {
@@ -162,6 +167,7 @@ impl HardwareQaViewState {
             model,
             export_status: None,
             selected_category: None,
+            last_key: None,
         }
     }
 
@@ -172,6 +178,7 @@ impl HardwareQaViewState {
         self.test_started = Instant::now();
         self.export_status = None;
         self.selected_category = None;
+        self.last_key = None;
     }
 
     /// Marks a physical key as verified and logs the keypress event.
@@ -362,94 +369,279 @@ pub fn map_text_to_a1843_id(text: &str) -> Option<&'static str> {
     }
 }
 
-/// Polls physical modifier keys using Win32 `GetAsyncKeyState` to distinguish left/right modifiers.
+/// A raw low-level keyboard event intercepted by the passive QA hook before any remapping.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RawQaEvent {
+    pub vk: u16,
+    pub scancode: u16,
+    pub extended: bool,
+    pub is_down: bool,
+}
+
+static QA_EVENT_QUEUE: Mutex<Vec<RawQaEvent>> = Mutex::new(Vec::new());
+
 #[cfg(windows)]
-fn poll_win32_modifiers_and_numpad(
-    state: &mut HardwareQaViewState,
-    recorded_this_frame: &mut HashSet<String>,
-) {
-    // Modifier VKs to check
-    const MODIFIER_VKS: &[(u16, &str)] = &[
-        (VK_LSHIFT, "LeftShift"),
-        (VK_RSHIFT, "RightShift"),
-        (VK_LCONTROL, "LeftControl"),
-        (VK_RCONTROL, "RightControl"),
-        (VK_LMENU, "LeftOption"),
-        (VK_RMENU, "RightOption"),
-        (VK_LWIN, "LeftCommand"),
-        (VK_RWIN, "RightCommand"),
-        (VK_CAPITAL, "CapsLock"),
-    ];
+static QA_HOOK_HANDLE: AtomicIsize = AtomicIsize::new(0);
 
-    for &(vk, id) in MODIFIER_VKS {
-        // SAFETY: Calling GetAsyncKeyState with a standard virtual key code is safe and has no side effects.
-        let key_state =
-            unsafe { windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(vk as i32) };
-        let is_down = (key_state as u16 & 0x8000) != 0;
-        let was_pressed = (key_state as u16 & 0x0001) != 0;
-
-        if (is_down || was_pressed) && !recorded_this_frame.contains(id) {
-            recorded_this_frame.insert(id.to_string());
-            let (scancode, ext) = default_scancode_and_extended(vk);
-            state.mark_key_verified(id, vk, scancode, ext);
-        }
+/// Installs the passive pre-remap WH_KEYBOARD_LL hook if not already active.
+#[cfg(windows)]
+pub fn ensure_qa_hook_installed() {
+    if QA_HOOK_HANDLE.load(Ordering::Acquire) != 0 {
+        return;
     }
-
-    // Numpad VKs to distinguish from number row
-    const NUMPAD_VKS: &[(u16, &str)] = &[
-        (VK_NUMPAD0, "Num0"),
-        (VK_NUMPAD1, "Num1"),
-        (VK_NUMPAD2, "Num2"),
-        (VK_NUMPAD3, "Num3"),
-        (VK_NUMPAD4, "Num4"),
-        (VK_NUMPAD5, "Num5"),
-        (VK_NUMPAD6, "Num6"),
-        (VK_NUMPAD7, "Num7"),
-        (VK_NUMPAD8, "Num8"),
-        (VK_NUMPAD9, "Num9"),
-        (VK_DECIMAL, "NumDecimal"),
-        (VK_ADD, "NumAdd"),
-        (VK_SUBTRACT, "NumSubtract"),
-        (VK_MULTIPLY, "NumMultiply"),
-        (VK_DIVIDE, "NumDivide"),
-        (VK_NUMLOCK, "Clear"),
-    ];
-
-    for &(vk, id) in NUMPAD_VKS {
-        // SAFETY: Calling GetAsyncKeyState with a standard virtual key code is safe and has no side effects.
-        let key_state =
-            unsafe { windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(vk as i32) };
-        let is_down = (key_state as u16 & 0x8000) != 0;
-        let was_pressed = (key_state as u16 & 0x0001) != 0;
-
-        if (is_down || was_pressed) && !recorded_this_frame.contains(id) {
-            recorded_this_frame.insert(id.to_string());
-            let (scancode, ext) = default_scancode_and_extended(vk);
-            state.mark_key_verified(id, vk, scancode, ext);
-        }
+    // SAFETY: SetWindowsHookExW installs a low-level keyboard hook procedure on the current thread's message pump.
+    let hhook = unsafe {
+        windows::Win32::UI::WindowsAndMessaging::SetWindowsHookExW(
+            windows::Win32::UI::WindowsAndMessaging::WH_KEYBOARD_LL,
+            Some(qa_low_level_keyboard_proc),
+            None,
+            0,
+        )
+    };
+    if let Ok(hook) = hhook {
+        QA_HOOK_HANDLE.store(hook.0 as isize, Ordering::Release);
     }
+}
 
-    // ISO angle brackets key (< >)
-    // SAFETY: Calling GetAsyncKeyState with standard virtual key code is safe.
-    let iso_state =
-        unsafe { windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState(VK_OEM_102 as i32) };
-    if (iso_state as u16 & 0x8000) != 0 || (iso_state as u16 & 0x0001) != 0 {
-        let id = "IsoLessGreater";
-        if !recorded_this_frame.contains(id) {
-            recorded_this_frame.insert(id.to_string());
-            let (scancode, ext) = default_scancode_and_extended(VK_OEM_102);
-            state.mark_key_verified(id, VK_OEM_102, scancode, ext);
+/// Removes the passive WH_KEYBOARD_LL hook.
+#[cfg(windows)]
+pub fn remove_qa_hook() {
+    let handle = QA_HOOK_HANDLE.swap(0, Ordering::AcqRel);
+    if handle != 0 {
+        // SAFETY: Handle was returned by SetWindowsHookExW and is valid to unhook.
+        unsafe {
+            let _ = windows::Win32::UI::WindowsAndMessaging::UnhookWindowsHookEx(
+                windows::Win32::UI::WindowsAndMessaging::HHOOK(handle as *mut _),
+            );
         }
     }
 }
 
-/// Fallback modifier poller for non-Windows platforms.
+/// No-op fallback for non-Windows platforms.
 #[cfg(not(windows))]
-fn poll_win32_modifiers_and_numpad(
-    _state: &mut HardwareQaViewState,
-    _recorded_this_frame: &mut HashSet<String>,
-) {
-    // Non-Windows fallback: no-op, relying on egui events.
+pub fn ensure_qa_hook_installed() {}
+
+/// No-op fallback for non-Windows platforms.
+#[cfg(not(windows))]
+pub fn remove_qa_hook() {}
+
+#[cfg(windows)]
+unsafe extern "system" fn qa_low_level_keyboard_proc(
+    ncode: i32,
+    wparam: windows::Win32::Foundation::WPARAM,
+    lparam: windows::Win32::Foundation::LPARAM,
+) -> windows::Win32::Foundation::LRESULT {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CallNextHookEx, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_SYSKEYDOWN,
+    };
+
+    if ncode >= 0 && lparam.0 != 0 {
+        // SAFETY: When ncode >= 0, Windows guarantees lparam points to a valid KBDLLHOOKSTRUCT.
+        let info = unsafe { &*(lparam.0 as *const KBDLLHOOKSTRUCT) };
+        let is_injected = (info.flags.0 & 0x10) != 0
+            || info.dwExtraInfo == magicbridge_core::key::MAGICBRIDGE_EXTRA_INFO;
+
+        // Strictly capture physical user input (ignore injected synthetic keys)
+        if !is_injected {
+            let msg = wparam.0 as u32;
+            let is_down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
+            let extended = (info.flags.0 & 0x01) != 0;
+            let vk = info.vkCode as u16;
+            let scancode = info.scanCode as u16;
+
+            if let Ok(mut queue) = QA_EVENT_QUEUE.lock()
+                && queue.len() < 256
+            {
+                queue.push(RawQaEvent {
+                    vk,
+                    scancode,
+                    extended,
+                    is_down,
+                });
+            }
+        }
+    }
+
+    // SAFETY: Forwarding hook chain with unmodified parameters is always safe.
+    unsafe { CallNextHookEx(None, ncode, wparam, lparam) }
+}
+
+/// Matches a raw physical hardware event (VK, scancode, extended) to an A1843 physical key ID.
+#[must_use]
+pub fn map_raw_event_to_a1843_id(vk: u16, scancode: u16, extended: bool) -> Option<&'static str> {
+    match vk {
+        VK_ESCAPE => Some("Escape"),
+        VK_F1 => Some("F1"),
+        VK_F2 => Some("F2"),
+        VK_F3 => Some("F3"),
+        VK_F4 => Some("F4"),
+        VK_F5 => Some("F5"),
+        VK_F6 => Some("F6"),
+        VK_F7 => Some("F7"),
+        VK_F8 => Some("F8"),
+        VK_F9 => Some("F9"),
+        VK_F10 => Some("F10"),
+        VK_F11 => Some("F11"),
+        VK_F12 => Some("F12"),
+        VK_F13 => Some("F13"),
+        VK_F14 => Some("F14"),
+        VK_F15 => Some("F15"),
+        VK_F16 => Some("F16"),
+        VK_F17 => Some("F17"),
+        VK_F18 => Some("F18"),
+        VK_F19 => Some("F19"),
+
+        // Return / Enter: distinguish main Enter (extended=0) vs Numpad Enter (extended=1)
+        VK_RETURN => {
+            if extended {
+                Some("NumEnter")
+            } else {
+                Some("Enter")
+            }
+        }
+
+        // Modifiers
+        VK_LSHIFT => Some("LeftShift"),
+        VK_RSHIFT => Some("RightShift"),
+        VK_LCONTROL => {
+            // ISO Italian AltGr quirk: scancode 0x21D is synthetic Left Control injected before Right Option.
+            if scancode == 0x21D {
+                None
+            } else {
+                Some("LeftControl")
+            }
+        }
+        VK_RCONTROL => Some("RightControl"),
+        VK_LMENU => Some("LeftOption"),
+        VK_RMENU => Some("RightOption"),
+        VK_LWIN => Some("LeftCommand"),
+        VK_RWIN => Some("RightCommand"),
+        VK_CAPITAL => Some("CapsLock"),
+
+        // Navigation cluster
+        VK_DELETE => Some("Delete"),
+        VK_HOME => Some("Home"),
+        VK_END => Some("End"),
+        VK_PRIOR => Some("PageUp"),
+        VK_NEXT => Some("PageDown"),
+        VK_LEFT => Some("Left"),
+        VK_RIGHT => Some("Right"),
+        VK_UP => Some("Up"),
+        VK_DOWN => Some("Down"),
+
+        // Editing
+        VK_BACK => Some("Backspace"),
+        VK_TAB => Some("Tab"),
+        VK_SPACE => Some("Space"),
+
+        // Numpad cluster
+        VK_NUMLOCK => Some("Clear"),
+        VK_NUMPAD0 => Some("Num0"),
+        VK_NUMPAD1 => Some("Num1"),
+        VK_NUMPAD2 => Some("Num2"),
+        VK_NUMPAD3 => Some("Num3"),
+        VK_NUMPAD4 => Some("Num4"),
+        VK_NUMPAD5 => Some("Num5"),
+        VK_NUMPAD6 => Some("Num6"),
+        VK_NUMPAD7 => Some("Num7"),
+        VK_NUMPAD8 => Some("Num8"),
+        VK_NUMPAD9 => Some("Num9"),
+        VK_DECIMAL => Some("NumDecimal"),
+        VK_ADD => Some("NumAdd"),
+        VK_SUBTRACT => Some("NumSubtract"),
+        VK_MULTIPLY => Some("NumMultiply"),
+        VK_DIVIDE => Some("NumDivide"),
+
+        // Letters A..Z
+        0x41 => Some("A"),
+        0x42 => Some("B"),
+        0x43 => Some("C"),
+        0x44 => Some("D"),
+        0x45 => Some("E"),
+        0x46 => Some("F"),
+        0x47 => Some("G"),
+        0x48 => Some("H"),
+        0x49 => Some("I"),
+        0x4A => Some("J"),
+        0x4B => Some("K"),
+        0x4C => Some("L"),
+        0x4D => Some("M"),
+        0x4E => Some("N"),
+        0x4F => Some("O"),
+        0x50 => Some("P"),
+        0x51 => Some("Q"),
+        0x52 => Some("R"),
+        0x53 => Some("S"),
+        0x54 => Some("T"),
+        0x55 => Some("U"),
+        0x56 => Some("V"),
+        0x57 => Some("W"),
+        0x58 => Some("X"),
+        0x59 => Some("Y"),
+        0x5A => Some("Z"),
+
+        // Digits 0..9 on main number row
+        0x30 => Some("0"),
+        0x31 => Some("1"),
+        0x32 => Some("2"),
+        0x33 => Some("3"),
+        0x34 => Some("4"),
+        0x35 => Some("5"),
+        0x36 => Some("6"),
+        0x37 => Some("7"),
+        0x38 => Some("8"),
+        0x39 => Some("9"),
+
+        // Punctuation & OEM keys
+        VK_OEM_1 => Some("Semicolon"),
+        VK_OEM_PLUS => {
+            // A1843 Numpad Equals: scancode 0x59 on Apple keyboards
+            if scancode == 0x59 {
+                Some("NumEquals")
+            } else {
+                Some("Equals")
+            }
+        }
+        VK_OEM_COMMA => Some("Comma"),
+        VK_OEM_MINUS => Some("Minus"),
+        VK_OEM_PERIOD => Some("Period"),
+        VK_OEM_2 => Some("Slash"),
+        VK_OEM_3 => Some("Grave"),
+        VK_OEM_4 => Some("LBracket"),
+        VK_OEM_5 => Some("Backslash"),
+        VK_OEM_6 => Some("RBracket"),
+        VK_OEM_7 => Some("Quote"),
+        VK_OEM_102 => Some("IsoLessGreater"),
+
+        // Numpad equals fallback (some drivers report 0x0C)
+        0x0C => Some("NumEquals"),
+
+        _ => {
+            // Fallback by scancode if VK differs by layout
+            match scancode {
+                0x29 => Some("Grave"),
+                0x0C => Some("Minus"),
+                0x0D => Some("Equals"),
+                0x59 => Some("NumEquals"),
+                0x1A => Some("LBracket"),
+                0x1B => Some("RBracket"),
+                0x2B => Some("Backslash"),
+                0x27 => Some("Semicolon"),
+                0x28 => Some("Quote"),
+                0x33 => Some("Comma"),
+                0x34 => Some("Period"),
+                0x35 => {
+                    if extended {
+                        Some("NumDivide")
+                    } else {
+                        Some("Slash")
+                    }
+                }
+                0x56 => Some("IsoLessGreater"),
+                _ => None,
+            }
+        }
+    }
 }
 
 /// Formats the current UTC timestamp string for reports (YYYYMMDD-HHMMSS).
@@ -794,18 +986,45 @@ fn render_qa_visual_keyboard(ui: &mut Ui, state: &mut HardwareQaViewState) {
 
     // Handle manual click to verify
     if let Some(key) = clicked_key {
-        let (sc, ext) = default_scancode_and_extended(key.vk);
-        state.mark_key_verified(key.id, key.vk, sc, ext);
+        state.mark_key_verified(key.id, key.vk, 0, false);
     }
 }
 
 /// Renders the complete Hardware QA View tab. Returns true when user clicks "Complete Testing".
 pub fn show(ui: &mut Ui, state: &mut HardwareQaViewState, i18n: &I18n) -> bool {
-    let mut recorded_this_frame = HashSet::new();
-
     // 1. Keyboard event listener mode
     if state.is_listening {
-        // Capture egui keypress events from window
+        ensure_qa_hook_installed();
+
+        // Drain raw events from the passive WH_KEYBOARD_LL hook (pre-remap physical input)
+        let raw_events: Vec<RawQaEvent> = {
+            if let Ok(mut q) = QA_EVENT_QUEUE.lock() {
+                q.drain(..).collect()
+            } else {
+                Vec::new()
+            }
+        };
+
+        for ev in raw_events {
+            if !ev.is_down {
+                continue;
+            }
+            if let Some(id) = map_raw_event_to_a1843_id(ev.vk, ev.scancode, ev.extended) {
+                let is_repeat = state.last_key.as_ref().is_some_and(|(last_id, time)| {
+                    last_id == id && time.elapsed().as_millis() < 120
+                });
+
+                state.tested_keys.insert(id.to_string());
+                state.last_key = Some((id.to_string(), Instant::now()));
+
+                if !is_repeat {
+                    state.mark_key_verified(id, ev.vk, ev.scancode, ev.extended);
+                }
+            }
+        }
+
+        // Non-Windows fallback
+        #[cfg(not(windows))]
         ui.input(|i| {
             for event in &i.events {
                 match event {
@@ -815,44 +1034,21 @@ pub fn show(ui: &mut Ui, state: &mut HardwareQaViewState, i18n: &I18n) -> bool {
                         pressed: true,
                         ..
                     } => {
-                        if let Some(id) = map_egui_key_to_a1843_id(*key, *physical_key)
-                            && !recorded_this_frame.contains(id)
-                        {
-                            recorded_this_frame.insert(id.to_string());
-                            let (vk, scancode, ext) = state
-                                .model
-                                .find_by_id(id)
-                                .map(|k| {
-                                    let (sc, e) = default_scancode_and_extended(k.vk);
-                                    (k.vk, sc, e)
-                                })
-                                .unwrap_or((0, 0, false));
-                            state.mark_key_verified(id, vk, scancode, ext);
+                        if let Some(id) = map_egui_key_to_a1843_id(*key, *physical_key) {
+                            state.mark_key_verified(id, 0, 0, false);
                         }
                     }
                     egui::Event::Text(text) => {
-                        if let Some(id) = map_text_to_a1843_id(text)
-                            && !recorded_this_frame.contains(id)
-                        {
-                            recorded_this_frame.insert(id.to_string());
-                            let (vk, scancode, ext) = state
-                                .model
-                                .find_by_id(id)
-                                .map(|k| {
-                                    let (sc, e) = default_scancode_and_extended(k.vk);
-                                    (k.vk, sc, e)
-                                })
-                                .unwrap_or((0, 0, false));
-                            state.mark_key_verified(id, vk, scancode, ext);
+                        if let Some(id) = map_text_to_a1843_id(text) {
+                            state.mark_key_verified(id, 0, 0, false);
                         }
                     }
                     _ => {}
                 }
             }
         });
-
-        // Query Win32 modifier and numpad states to unambiguously detect Left vs Right keys
-        poll_win32_modifiers_and_numpad(state, &mut recorded_this_frame);
+    } else {
+        remove_qa_hook();
     }
 
     // 2. Header and Controls Toolbar
@@ -1069,6 +1265,7 @@ pub fn show(ui: &mut Ui, state: &mut HardwareQaViewState, i18n: &I18n) -> bool {
 
             if ui.add(finish_btn).clicked() {
                 finished = true;
+                remove_qa_hook();
             }
         });
     });
@@ -1166,6 +1363,64 @@ mod tests {
         assert_eq!(map_text_to_a1843_id("<"), Some("IsoLessGreater"));
         assert_eq!(map_text_to_a1843_id(">"), Some("IsoLessGreater"));
         assert_eq!(map_text_to_a1843_id("à"), Some("Quote"));
+    }
+
+    #[test]
+    fn test_map_raw_event_to_a1843_id() {
+        // Return vs NumEnter
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_RETURN, 0x1C, false),
+            Some("Enter")
+        );
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_RETURN, 0x1C, true),
+            Some("NumEnter")
+        );
+
+        // Clear (VK_NUMLOCK)
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_NUMLOCK, 0x45, true),
+            Some("Clear")
+        );
+
+        // NumEquals (scancode 0x59)
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_OEM_PLUS, 0x59, false),
+            Some("NumEquals")
+        );
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_OEM_PLUS, 0x0D, false),
+            Some("Equals")
+        );
+
+        // F13..F19
+        assert_eq!(map_raw_event_to_a1843_id(VK_F13, 0x64, false), Some("F13"));
+        assert_eq!(map_raw_event_to_a1843_id(VK_F19, 0x6A, false), Some("F19"));
+
+        // Commands and Options
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_LWIN, 0x5B, true),
+            Some("LeftCommand")
+        );
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_RWIN, 0x5C, true),
+            Some("RightCommand")
+        );
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_LMENU, 0x38, false),
+            Some("LeftOption")
+        );
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_RMENU, 0x38, true),
+            Some("RightOption")
+        );
+
+        // Synthetic ISO AltGr Left Control must be ignored
+        assert_eq!(map_raw_event_to_a1843_id(VK_LCONTROL, 0x21D, false), None);
+        assert_eq!(
+            map_raw_event_to_a1843_id(VK_LCONTROL, 0x1D, false),
+            Some("LeftControl")
+        );
     }
 
     #[test]
