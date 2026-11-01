@@ -104,6 +104,8 @@ Before writing or modifying any code, the agent MUST read:
 
 ### B. Implementation & Performance Guards
 - **Hook Thread Rule (NFR-P3):** The `WH_KEYBOARD_LL` callback in `magicbridge-agent` MUST NEVER allocate memory (`Vec`, `String`, `Box`), perform disk/file I/O, output log prints, acquire locks, or invoke blocking syscalls. Precomputed lookup tables only.
+- **GUI Process Hook Prohibition (Stability Rule):** `WH_KEYBOARD_LL` or any global Win32 low-level hook MUST NEVER be installed inside an interactive GUI process (`magicbridge-settings`, `egui`/`winit`). Global hooks intercept keystrokes OS-wide; executing them on an interactive UI rendering thread causes message queue contention, triggers Windows low-level hook timeouts, and locks up the entire operating system. Low-level hooks belong solely in headless daemons (`magicbridge-agent`). Diagnostic/QA tools in GUI processes must request the daemon to pause remapping via IPC (`ipc.set_paused(true)`) and capture keystrokes in-window via `egui::Event::Key` and `GetKeyState`.
+- **IPC Shared State Synchronization:** Any mutation to hardware connection, device arrival/removal (`WM_DEVICECHANGE`), battery polling, or tray toggle states inside `MessageWindow` (`WindowData`) MUST immediately synchronize to `Arc<Mutex<DaemonState>>` (`sync_to_shared_state()`). The daemon's IPC server must never serve stale connection or battery data to client processes (Setup Wizard, Settings app).
 - **Event-Driven Only (NFR-P2):** Zero busy loops or polling timers. All reactions must stem from Win32 message queues, device arrival notifications, or named pipes (except low-frequency battery polling).
 - **Anti-Cheat & Driver Rule (NFR-S1):** Strictly **no kernel drivers**, no `.sys` binaries, and **no DLL injection**.
 - **Loop Prevention:** Every synthetic input sent via `SendInput` MUST include the distinct `dwExtraInfo` marker (`MAGICBRIDGE_EXTRA_INFO`) and the hook must ignore it.
@@ -123,6 +125,7 @@ Before writing or modifying any code, the agent MUST read:
   - Scope file searches strictly to the project workspace; never run unconstrained recursive searches over `.cargo`, `target`, or dependency caches.
 - **Single-Binary Distribution & Setup Ergonomics:**
   - Release bundles must NEVER contain multiple confusing executables. Distribute a single standalone installer (`MagicBridge-Setup.exe`) and a clean portable archive containing only `magicbridge.exe` and resources.
+  - Packaging scripts (`scripts/package-release.ps1`) MUST isolate releases into individual version folders (`dist\v{Version}\`) and unpack a ready-to-test extracted `portable\` directory alongside installers and zip archives.
   - The setup wizard MUST implement a progressive 5-step flow with breadcrumbs and animated progress bar, masking non-basic options behind an advanced toggle, and registering full uninstallation across Windows Settings, Start Menu, and Settings GUI.
   - Launching `magicbridge.exe` directly MUST ALWAYS open the Settings Panel directly without hijacking or blocking normal application access.
 

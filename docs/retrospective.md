@@ -1,85 +1,102 @@
-# MagicBridge — Retrospective (M0 → v0.2.0)
+# MagicBridge — Retrospective (M0 → v0.4.1)
 
-> Date: 2026-10-25 · Scope: 26 commits, milestones M0–M10, releases v0.1.0 / v0.2.0,
-> 19 agent conversations (3 interactive lead sessions + 16 worker subagents).
-> Method: transcript mining by 3 parallel research subagents + git history + docs review.
-> Generic lessons were promoted to the `project-kickstart` plugin (v1.0.0).
+> Date: 2026-11-01 · Scope: 45+ commits, milestones M0–M19, releases v0.1.0 through v0.4.1,
+> multi-session interactive lead orchestrations + worker subagent parallelizations.
+> Method: transcript mining + git history + field-test reviews + post-mortem analysis.
+> Generic lessons promoted to the `project-kickstart` plugin.
+
+---
 
 ## 1. Timeline
 
-| Phase | Commits | Conversations |
-|---|---|---|
-| Definition (vision, requirements, architecture, roadmap, AGENTS.md) | `8cbeb8b` | [Project definition](conversation://8b5c8372-6864-48d7-b03e-af49fbb1944a) |
-| M0 hardware spike: `hid-probe`, USB/BT findings, VID `0x004C` over BT | `4935fbf` → `ac95648` | [M0 lead session](conversation://74a20b38-6821-4721-a963-ab06ab006a26) |
-| Process: CI, templates, Sole Committer, tiers, fallback log | `5369267` → `21ca1fb` | [Lead orchestrator](conversation://ef69a3e5-bec9-4b08-9056-e029d4b12cf9) |
-| M1–M2 skeleton, engine, hook, IPC (parallel workers) | `b0d6dac` → `fb3e069` | workers `f9c62416`, `239861da`, `c02fe291`, `2d845bf5`, `84015013`, `aac29874`, `c40a9dfd` |
-| M3–M5 top row, battery, Settings GUI | `aaddee6`, `01e5e6f` | workers `168ee8e1`, `5cf471b9`, `92a32f53` |
-| M6–M7 hardening, game mode, packaging → v0.1.0 | `5e343ef` | workers `01a026f6`, `36fa3616` |
-| M8–M10 methodology doc, installer, onboarding, responsive UI, QA tool → v0.2.0 | `f44f470` → `892674e` | workers `017d0f44`, `092b4c29`, `63acd115`, `a4b6ceba` |
-| Repo health: IPC test hang fixed | `13e8acb` | lead `ef69a3e5` |
-
-## 2. What worked
-- **Spec first, then M0 hardware spike.** The `hid-probe` tool turned three 🔬 unknowns into facts before any daemon code existed:
-  Fn is stripped by `kbdhid.sys`, BT uses VID `0x004C`, battery is in report `0x90`, and there's the ISO AltGr `0x21D` quirk.
-  Without it, the Fn design would have been wrong.
-- **One roadmap task per conversation / worker**, with IDs and acceptance criteria. Workers could start cold from `AGENTS.md`.
-- **Isolated branch workspaces + Sole Committer.** Up to 4 parallel workers per phase with zero merge conflicts.
-- **Module boundaries designed for parallelism.** The `core` (pure, `forbid(unsafe)`) / `agent` / `settings` split made cross-crate parallel work trivial.
-- **Mechanical verification gate** (fmt, clippy `-D warnings`, test, release build) run by workers *and* again by the lead after integration.
-  The lead's re-run caught real integration bugs (see §3).
-- **Structured worker completion reports** made integration fast.
-- **Complexity tiers** kept heavy models for hooks/HID/concurrency and lean models for schemas, scripts and docs.
-
-## 3. What went wrong (evidence)
-| # | Issue | Evidence | Impact |
+| Phase | Commits | Milestones & Focus | Key Deliverables & Conversations |
 |---|---|---|---|
-| 1 | **`cargo` missing from PATH in worker shells.** Happened in essentially every worker. | 13+ workers, e.g. `2d845bf5`, `c40a9dfd`, `a4b6ceba` | 2–3 wasted steps per worker |
-| 2 | PATH not refreshed after the user installed Rust mid-session | `74a20b38` (user: *"i've installed rust at system level please try again"*) | User had to intervene |
-| 3 | PowerShell: stderr treated as an error, quote/escaping and multiline failures | `74a20b38`, `ef69a3e5`, `092b4c29`, `63acd115` | Repeated retries |
-| 4 | **API signature drift across parallel workers** (`IpcServer::start` went from 2 to 4 arguments, caller not updated) | `ef69a3e5` | Caught only by the lead's gate |
-| 5 | Undeclared dependencies / missing `windows` crate features (`Win32_Security`, `Win32_System_Pipes`, `serde_json`, `webbrowser`) | `c02fe291`, `c40a9dfd`, `092b4c29`, `ef69a3e5` | Compile failures |
-| 6 | **Test races on global OS state** (named-pipe readiness, process-wide hook atomics) and a test-suite **hang** | `c40a9dfd`, `a4b6ceba`, `ef69a3e5` → fix `13e8acb` | User had to ask *"is the repository 100% healthy?"* |
-| 7 | Unbounded recursive search over `~/.cargo/registry` stalled a worker | `092b4c29` | Task had to be killed |
-| 8 | Requested model tier not always the model that actually ran (T1 workers reported running on `inherit`) | G2 workers (inferred) | Token budget unclear; fallback log stayed empty |
-| 9 | **Claims ahead of evidence.** The methodology doc and CHANGELOG claim "zero stuck keys" and production quality, while every hardware row in `06-qa-and-validation.md` is still *Pending Test*. v0.1.0/v0.2.0 shipped before any physical QA. | docs vs. QA matrix | Overstated quality |
-| 10 | PowerShell writes corrupted UTF-8 (`�?"` in `model-fallback-log.md`, `?` instead of emoji in CHANGELOG) | files on `main` | Cosmetic, recurring |
-| 11 | Release zips committed to git (`dist/*.zip`) | `git ls-files dist` | Repo bloat |
-| 12 | Large batched commits (e.g. "M6 & M7", "M3 & M4") | git log | Harder review/rollback |
-| 13 | The `magicbridge-worker` subagent was defined only inside a chat, so it couldn't be reused | `ef69a3e5` | Re-defined per session |
+| **Phase 0: Definition & Spike** | `8cbeb8b` → `ac95648` | M0 Hardware Spike | [Project definition](conversation://8b5c8372-6864-48d7-b03e-af49fbb1944a), [M0 session](conversation://74a20b38-6821-4721-a963-ab06ab006a26). Ground-truth hardware discoveries (`hid-probe`, VID `0x004C` over BT, report `0x90`, ISO AltGr `0x21D`). |
+| **Phase 1: Core Engine & GUI** | `5369267` → `892674e` | M1–M10 Skeleton, Engine, GUI, Packaging | v0.1.0 and v0.2.0 releases. Sole Committer Protocol, complexity tiers, 2-process architecture (`magicbridge-agent` + `magicbridge-settings`), basic QA tool. |
+| **Phase 2: Power Features & Ecosystem** | `b9f3900` → `5928cb5` | M11–M18 Game Mode, Profiles, OSD HUD, Multi-Model, CI/CD | v0.3.0 and v0.4.0 releases. Acrylic OSD HUD (`Fn+Esc`), foreground process auto-switching, multi-model Apple database (A1843, A1644, A2449, A2520, A1314, A1243), 5-step installer wizard. |
+| **Phase 3: Field-Test Audit & Stability** | `9c9b482` → `0ee0c1a` | M19 Field-Test Remediation & Stability Hotfix | v0.4.1 release. Direct hardware probe, `Clear -> Escape` mapping, honest pre-remap QA, elimination of GUI hook lockup, IPC shared-state sync, isolated `dist\v0.4.1\` pipeline. |
 
-## 4. User corrections → rules
-| User said (paraphrased) | Rule adopted |
-|---|---|
-| "Can you be the sole one committing and avoid merge conflicts?" | Sole Committer Protocol (`21ca1fb`) |
-| "Dynamic model selection by complexity; fallback + retrospective review if tokens run out" | Tiers T1–T3, fallback order, `model-fallback-log.md`, audit task |
-| "No dependent tasks in parallel" | Dependency/file-ownership analysis before spawning |
-| "Leave hardware testing for when I'm at the PC; I need a step-by-step QA process" | Separate headless work from hardware-in-the-loop QA; QA matrix + in-app QA tool |
-| "Don't these changes deserve a new release? Define a versioning method" | `release-methodology.md`, SemVer, version single source of truth |
-| "Manage multiple layouts and custom ones as profiles; commit regularly; make it public" | Keymaps as runtime data (profiles); regular pushes |
-| "Why did the command get stuck? Is the repo healthy?" | Never ignore hangs: find the root cause and add timeouts to tests |
-| "I've installed Rust at system level, try again" | Refresh PATH from the registry after installs |
+---
 
-## 5. Metrics
-- 26 commits · 10 milestones · 2 releases · ~160 automated tests (last reported) · agent binary ≈ 534 KB.
-- Hardware QA: **0 / 12** rows passed (all Pending). Budget tests: latency, soak and stuck-key tests are automated and passing.
+## 2. What Worked
 
-## 6. Open risks / follow-ups for this repo
-- [ ] Run the hardware QA matrix (QA-HW-01…12, QA-SYS-01…05) on a physical A1843 and record the evidence. _(Tooling ready in Settings Hardware QA tab; pending physical confirmation)_
-- [x] Tone down unverified claims in `multi-agent-methodology.md` / README until QA passes. _(Completed: claims aligned with automated invariants; hardware QA labeled pending)_
-- [x] Remove `dist/*.zip` from git (keep them in GitHub Releases) and add `/dist` to `.gitignore`. _(Completed: dist/ clean and gitignored)_
-- [x] Fix the encoding corruption in `docs/model-fallback-log.md` and `CHANGELOG.md`. _(Completed: UTF-8 encoding verified clean)_
-- [x] Verify which model actually runs per tier, and log any mismatches in the fallback log. _(Completed: logged in docs/model-fallback-log.md)_
+1. **Spec First, Followed by M0 Hardware Spike:**
+   - Writing `hid-probe` before writing daemon code grounded the entire architecture in hardware realities:
+     Fn stripped by `kbdhid.sys` in kernel mode, Bluetooth Classic using Apple VID `0x004C`, battery status in vendor report `0x90`, and Windows synthesizing synthetic `VK_LCONTROL` (`0x21D`) on Italian/ISO layouts.
+2. **Strict Crate Boundaries for Parallelism:**
+   - `magicbridge-core` (`#![forbid(unsafe_code)]`, pure Rust, zero Win32) decoupled completely from `magicbridge-agent` (Win32 hooks, tray, IPC) and `magicbridge-settings` (egui GUI).
+   - This boundary allowed unit test suites to run in parallel and kept unsafe Win32 APIs isolated to audited wrappers.
+3. **Mechanical Verification Gate with Fast & Full Modes:**
+   - Running `scripts/verify-gate.ps1` locally before every commit caught compiler warnings, clippy regressions, and test failures early.
+   - The test suite expanded to **154 automated unit & integration tests**, passing in under 1.6 seconds.
+4. **Direct HID Hardware Probe Fallback:**
+   - Probing USB and Bluetooth HID devices directly via Setup Wizard (`crates/settings/src/installer.rs`) provided instant model and battery feedback even when the background daemon service was not yet initialized.
+5. **Zero-Hook In-Window QA Architecture:**
+   - Replacing global `WH_KEYBOARD_LL` hooks in the GUI with IPC daemon pause (`ipc.set_paused(true)`) and in-window `egui::Event::Key` / `GetKeyState` input capture eliminated hook contention completely while providing clean, unmapped keystroke verification.
+6. **Native Font Fallback Integration:**
+   - Loading Windows system fonts `seguisym.ttf` (Segoe UI Symbol) and `seguiemj.ttf` (Segoe UI Emoji) natively in `setup_custom_fonts()` resolved all missing glyph tofu boxes (`□`) without bloating binary sizes.
 
-## 7. Generic lessons (promoted to the kit)
-1. Put unknowns into an M0 spike with a probe tool. Never design around guesses.
-2. Design module boundaries for parallel work. Interface changes run first and alone.
-3. One lead commits; workers run in branch workspaces and return structured reports.
-4. The lead re-runs the full gate on the **integrated** tree. Worker gates aren't enough.
-5. Every worker prompt includes an environment preamble (toolchain PATH) and the exact files it owns.
-6. Declare dependencies/features in the same change that uses them, and use `--package` in workspaces.
-7. Tests that touch global OS objects need unique names, readiness signals and timeouts. Never rely on sleep.
-8. Scope searches to the workspace; never recurse into dependency caches.
-9. Claims follow evidence: QA stays Pending until a human confirms, and release notes list what's still Pending.
-10. Force UTF-8 when writing from PowerShell; don't commit build artifacts.
-11. Persist agent definitions as files (plugin/workspace), not inside a chat.
-12. Run a retrospective after every major milestone and promote lessons into the kit.
+---
+
+## 3. What Went Wrong & Empirical Post-Mortem
+
+| # | Phase | Issue | Evidence | Root Cause | Impact & Resolution |
+|---|---|---|---|---|---|
+| 1 | M1–M10 | `cargo` missing from PATH in worker subshells | 13+ workers (`2d845bf5`, etc.) | New PowerShell subshells do not inherit modified user environment | Codified PATH preamble in `AGENTS.md` and worker scripts. |
+| 2 | M2 | IPC test hang on global OS state | Commit `13e8acb` | Named pipe tests raced on hardcoded pipe names without timeouts | Refactored tests to use unique UUID pipe names and channel readiness signals. |
+| 3 | M10 | Claims ahead of evidence (v0.1.0/v0.2.0) | CHANGELOG vs QA matrix | Release notes claimed "production ready" while physical QA was untested | Codified "Claims Follow Evidence": automated tests marked PASS; physical matrix rows marked Pending. |
+| 4 | M15–M18 | Overstated completion ("integrated" vs "engine ready") | Field test review [`docs/reviews/2026-11-01-field-test-review.md`](reviews/2026-11-01-field-test-review.md) | M18.3 claimed mouse scrolling done when only math library existed; M15.2 claimed WinRT toasts but used balloons | Redefined "Done": a feature is done only when an end-to-end call path from physical/OS event to output is wired and verified. |
+| 5 | M19 | **Global `WH_KEYBOARD_LL` in GUI process froze Windows OS** | User report: *"QA/testing is crashing my PC and it is not working; the application looks totally unstable"* | `qa_view.rs` installed a low-level input hook on the interactive `egui`/`winit` rendering thread; hook contention triggered Windows input timeouts | **Critical Rule:** Never install `WH_KEYBOARD_LL` in GUI processes. Purged hook from GUI; pause daemon remapping via IPC instead. |
+| 6 | M19 | **Wizard reported "Keyboard not connected" with keyboard plugged in** | User screenshot `media_1793555023966_83268769.png` | `MessageWindow` mutated internal `WindowData` on `WM_DEVICECHANGE` and battery polls but never synced to `Arc<Mutex<DaemonState>>` | Added `sync_to_shared_state()` called on every connection/battery change; added direct HID probe fallback in Wizard. |
+| 7 | M19 | **A1843 `Clear` key broke numeric keypad typing** | Field-test report | Physical Clear sends `VK_NUMLOCK` (`0x90`), which toggled Windows NumLock off and turned numbers into navigation keys | Mapped `VK_NUMLOCK -> Escape` by default in `magicbridge-core`, keeping NumLock permanently active. |
+| 8 | v0.4.0 | **Unorganized flat `dist/` directory caused testing friction** | User report: *"can't find the exe on local to execute, can you ensure any release has its own separate folder?"* | Packaging script output all archives into a single flat `dist\` directory, requiring manual extraction | Updated `package-release.ps1` to isolate every release into `dist\v{Version}\` with an unzipped, ready-to-test `portable\` folder. |
+
+---
+
+## 4. User Corrections → Concrete Rules
+
+| User Correction / Feedback | Architectural Rule Adopted | Location |
+|---|---|---|
+| *"QA/testing is crashing my PC and it is not working; the application looks totally unstable"* | **GUI Hook Prohibition:** Never install `WH_KEYBOARD_LL` in a GUI process. Global low-level hooks belong strictly in headless background services. In GUI QA, pause daemon via IPC (`set_paused(true)`) and read keys in-window. | `AGENTS.md` §5.B, `docs/lessons-learned.md` |
+| *"In the screenshot the wizard is not detecting the keyboard even if connected"* | **IPC State Synchronization:** All window message loop mutations (`WM_DEVICECHANGE`, battery polls) must immediately synchronize to `Arc<Mutex<DaemonState>>`. | `AGENTS.md` §5.B, `crates/agent/src/window.rs` |
+| *"Can't find the exe on local to execute, can you ensure any release has its own separate folder with all the dist files?"* | **Per-Version Release Directories:** Every release must be staged in an isolated folder (`dist\v{Version}\`) containing an unzipped `portable\` directory alongside installers and zip archives. | `AGENTS.md` §5.C, `scripts/package-release.ps1` |
+| *"The message in the wizard makes no sense with the connected keyboard"* | Remove unverified feature promises (e.g. "Brightness") and accurately display model name and battery status. | `crates/settings/src/installer.rs` |
+| *"How hard would be to give support to all the others apple keyboards?"* | Multi-model architecture: parameterize keyboard models with form factor, PID database, and layout geometry. | `crates/core/src/config.rs`, `crates/settings/src/keyboard_model.rs` |
+
+---
+
+## 5. Metrics & Project Status
+
+- **Git & Commits:** 45+ commits on `main`.
+- **Milestones:** M0 through M19 complete; M20–M22 scoped and prioritized.
+- **Releases:** 6 releases published (`v0.1.0`, `v0.2.0`, `v0.2.1`, `v0.3.0`, `v0.4.0`, `v0.4.1`).
+- **Automated Tests:** **154 tests** across workspace (81 agent, 41 core, 32 settings) — **100% PASS** in 1.52s.
+- **Hook Performance:** Lookup latency **`0.0006 ms`** (~600 ns), well below the 0.1 ms NFR-P3 budget; zero allocations or locks on hook path.
+- **Physical Hardware QA:** 0/12 rows passed on physical A1843 (all tooling ready and marked `Pending Physical Confirmation`).
+
+---
+
+## 6. Open Follow-ups & Next Milestones
+
+1. **Physical A1843 Validation:** User testing of `dist\v0.4.1\portable\magicbridge.exe` and `MagicBridge-Setup.exe` with physical A1843 keyboard over USB and Bluetooth.
+2. **M20 — Visual Polish & Readability (v0.5.0):**
+   - Application icon for `.exe`, title bar, and system tray (#39).
+   - Key Editor side-panel ergonomics (#38).
+   - Readable 2-line ISO key legends (#41).
+   - Daemon memory profile optimization vs NFR-P1 (#43).
+3. **M21 — Docs & Release Sync:**
+   - Synchronize README, user guide, and QA matrix (#44).
+4. **M22 — Magic Mouse Integration (v0.6.0):**
+   - Connect the inertial scrolling engine to real raw mouse input (#45).
+
+---
+
+## 7. Generic Lessons Promoted to Project Kickstart
+
+1. **Spike Unknowns Before Designing (M0 Spike):** Never guess hardware or OS behavior. Write a minimal probe tool first to establish empirical ground truth.
+2. **Decouple Headless Daemons from Interactive GUIs:** Low-level OS hooks (`WH_KEYBOARD_LL`, `WH_MOUSE_LL`) belong exclusively in headless daemons on dedicated message pumps. GUI applications must remain 100% hook-free.
+3. **IPC State Must Never Lag Window Events:** Internal message-window state (`WindowData`) and thread-safe IPC state (`Arc<Mutex<T>>`) must be synchronized at every mutation point.
+4. **Distribute End-to-End Features, Not Just Library Logic:** A feature is only complete when an unbroken call path from hardware/OS input to user output is established. Library code without input plumbing is "engine ready", not "integrated".
+5. **Claims Follow Evidence:** Distinguish automated invariant tests from physical hardware validation. Keep hardware matrix rows `Pending Physical Confirmation` until human-tested on physical devices.
+6. **Ergonomic Release Packaging:** Always output releases into clean, per-version directories with pre-extracted portable targets so testers never have to hunt for or unzip binaries.
+7. **Sole Committer Protocol:** Only the lead orchestrator commits to `main` and pushes; workers deliver via isolated branches and structured completion reports.

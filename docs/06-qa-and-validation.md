@@ -8,10 +8,10 @@ This document defines the quality assurance framework, empirical hardware verifi
 
 ```mermaid
 flowchart TD
-    subgraph L1["Level 1: Automated Unit & Invariant Testing (134 tests)"]
-        U1["magicbridge-core: Pure logic, schema roundtrip, lookup tables (32 tests)"]
-        U2["magicbridge-agent: IPC, autostart, battery parsing, key injection (72 tests)"]
-        U3["magicbridge-settings: i18n, key model, wizard, QA matrix, responsive UI (30 tests)"]
+    subgraph L1["Level 1: Automated Unit & Invariant Testing (154 tests)"]
+        U1["magicbridge-core: Pure logic, schema roundtrip, lookup tables, inertial scroll (41 tests)"]
+        U2["magicbridge-agent: IPC, autostart, battery parsing, key injection, OSD, process watcher (81 tests)"]
+        U3["magicbridge-settings: i18n, key model, wizard, QA matrix, responsive UI (32 tests)"]
     end
 
     subgraph L2["Level 2: Automated Hardening & Soak Gates"]
@@ -97,6 +97,7 @@ The following tests require physical connection of the Apple Magic Keyboard with
 | **QA-SYS-03** | Gaming | Game Mode Auto-Pause | Launch a fullscreen DirectX/Vulkan game or listed process (e.g., `steam.exe`). | MagicBridge automatically pauses remappings; native keys pass directly to game; resumes upon game exit. | Pending Test |
 | **QA-SYS-04** | Localization | Windows Layout Dynamic Switch | Switch Windows input language (`Win + Space`) between Italian, US English, and German. | Visual key legends adapt; character output follows active Windows input layout. | Pending Test |
 | **QA-SYS-05** | Reliability | Rapid Emergency Disconnect | Unplug keyboard during continuous keydown hold. | Emergency release logic fires; synthetic keys do not remain held down in Windows. | Pending Test |
+| **QA-SYS-06** | Stability | Zero-Hook GUI Stability & IPC Pause | Open Settings -> Hardware QA tab. Type keys rapidly across the keyboard; minimize and maximize window; switch between tabs. | Zero hook contention; operating system remains 100% responsive without keyboard stalls; daemon remapping pauses cleanly on entry and resumes on exit. | Pending Test |
 
 ---
 
@@ -111,6 +112,7 @@ The following tests require physical connection of the Apple Magic Keyboard with
 | **QA-UI-05** | Theme | Dark / Light / System Mode | In General Settings tab, switch Color Theme between `System Default`, `Dark`, and `Light`. | UI visuals update immediately to dark or light themes matching preference. | Pending Test |
 | **QA-UI-06** | Remap Ergonomics | Quick Presets & Search Filter | Select a key in visual keyboard. Click `[PrintScreen]`; type `"f1"` in filter box. | Quick preset assigns immediately; filter box narrows target dropdown in real time. | Pending Test |
 | **QA-UI-07** | Status & Tray | Top-Rail Status Pill & Tray Profiles | Inspect top-rail pill across tabs; right-click system tray icon and switch profile. | Pill shows live battery & connection; clicking pill opens Battery tab; tray menu allows 1-click profile switching. | Pending Test |
+| **QA-UI-08** | Installer | Direct Hardware Detection in Setup Wizard | Launch `MagicBridge-Setup.exe` with A1843 keyboard connected (before daemon is started). Advance to Step 4. | Banner immediately reports "✔ Connected: Magic Keyboard with Numeric Keypad (A1843)" and battery level without requiring background daemon service to be running. | Pending Test |
 
 ---
 
