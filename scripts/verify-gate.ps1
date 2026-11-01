@@ -151,11 +151,7 @@ switch ($Stack) {
 
         # Automated Tests
         Invoke-Stage "Automated Tests" {
-            if ($Mode -eq "Fast") {
-                npm test -- --run --bail=1
-            } else {
-                npm test -- --run
-            }
+            npm test
             if ($LASTEXITCODE -ne 0) { throw "npm test failed" }
         }
 
