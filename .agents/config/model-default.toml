@@ -1,0 +1,5 @@
+# Antigravity Model Configuration
+# Defines the repository default model for autonomous subagents and workers.
+# Automatically audited and updated by scripts/apply-model-optimisation.ps1.
+
+default_model = "flash_lite"

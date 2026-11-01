@@ -67,6 +67,13 @@ function Ensure-Dir([string]$Path) {
     if (-not (Test-Path $Path)) { New-Item -ItemType Directory -Path $Path -Force | Out-Null }
 }
 
+function Format-SanitizedPath([string]$Path) {
+    if (-not [string]::IsNullOrEmpty($env:USERPROFILE)) {
+        return ($Path -replace [regex]::Escape($env:USERPROFILE), "~")
+    }
+    return $Path
+}
+
 # -----------------------------------------------------------------------------
 # ACTION: List
 # -----------------------------------------------------------------------------
@@ -181,7 +188,7 @@ if ($Action -eq "New") {
     Set-Content -Path (Join-Path $TargetDir "SKILL.md") -Value $SkillContent -Encoding utf8
 
     Write-Host "[OK] Created new $Scope skill: $Name" -ForegroundColor Green
-    Write-Host "Location: $TargetDir\SKILL.md" -ForegroundColor Cyan
+    Write-Host "Location: $(Format-SanitizedPath $TargetDir)\SKILL.md" -ForegroundColor Cyan
     if ($Scope -eq "Global") {
         Write-Warning "This skill is Global and will consume customization tokens in EVERY project."
     } else {
@@ -211,8 +218,8 @@ if ($Action -eq "Promote") {
         Write-Host "[OK] Copied '$Name' from Local to Global!" -ForegroundColor Green
     }
 
-    Write-Host "Source: $TargetLocalPath" -ForegroundColor Gray
-    Write-Host "Destination: $TargetGlobalPath" -ForegroundColor Cyan
+    Write-Host "Source: $(Format-SanitizedPath $TargetLocalPath)" -ForegroundColor Gray
+    Write-Host "Destination: $(Format-SanitizedPath $TargetGlobalPath)" -ForegroundColor Cyan
     Write-Warning "Skill '$Name' is now globally active in all projects and will consume global customization tokens."
     exit 0
 }
@@ -236,7 +243,7 @@ if ($Action -eq "Demote") {
 
     Move-Item -Path $TargetGlobalPath -Destination $TargetLocalPath -Force
     Write-Host "[OK] Demoted '$Name' from Global to Local!" -ForegroundColor Green
-    Write-Host "Moved to: $TargetLocalPath" -ForegroundColor Cyan
+    Write-Host "Moved to: $(Format-SanitizedPath $TargetLocalPath)" -ForegroundColor Cyan
     Write-Host "Freed global customization tokens! '$Name' is now active only in this project." -ForegroundColor Green
     exit 0
 }
@@ -248,12 +255,12 @@ if ($Action -eq "Delete") {
     $Deleted = $false
     if (($Scope -eq "Local") -and (Test-Path $TargetLocalPath)) {
         Remove-Item -Path $TargetLocalPath -Recurse -Force
-        Write-Host "[OK] Deleted local skill: $TargetLocalPath" -ForegroundColor Green
+        Write-Host "[OK] Deleted local skill: $(Format-SanitizedPath $TargetLocalPath)" -ForegroundColor Green
         $Deleted = $true
     }
     if (($Scope -eq "Global") -and (Test-Path $TargetGlobalPath)) {
         Remove-Item -Path $TargetGlobalPath -Recurse -Force
-        Write-Host "[OK] Deleted global skill: $TargetGlobalPath" -ForegroundColor Green
+        Write-Host "[OK] Deleted global skill: $(Format-SanitizedPath $TargetGlobalPath)" -ForegroundColor Green
         $Deleted = $true
     }
 
