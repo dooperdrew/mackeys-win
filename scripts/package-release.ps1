@@ -114,59 +114,86 @@ if (Test-Path $AgentExe) {
 Write-Host "  - Found translations: $LocalesSrc" -ForegroundColor Green
 Write-Host "  - Found documentation and license." -ForegroundColor Green
 
-# 3. Create clean staging directory
-Write-Host "`n[3/5] Assembling staging directory..." -ForegroundColor Cyan
+# 3. Create clean staging directory and version-specific output folder
+Write-Host "`n[3/5] Assembling staging directory and release folders..." -ForegroundColor Cyan
 $AbsoluteOutputDir = Join-Path $RepoRoot $OutputDir
 if (-not (Test-Path $AbsoluteOutputDir)) {
     New-Item -ItemType Directory -Path $AbsoluteOutputDir -Force | Out-Null
 }
 
-$ArchiveBaseName = "MagicBridge-v$Version-portable"
-$StagingDir = Join-Path $AbsoluteOutputDir "staging\$ArchiveBaseName"
-
-if (Test-Path $StagingDir) {
-    Remove-Item -Path $StagingDir -Recurse -Force
+$VersionDir = Join-Path $AbsoluteOutputDir "v$Version"
+if (-not (Test-Path $VersionDir)) {
+    New-Item -ItemType Directory -Path $VersionDir -Force | Out-Null
 }
-New-Item -ItemType Directory -Path $StagingDir -Force | Out-Null
 
-# Copy standalone setup executable directly to output directory (SINGLE EXECUTABLE INSTALLER)
-$SetupExeName = "MagicBridge-Setup.exe"
-$VersionedSetupExeName = "MagicBridge-v$Version-Setup.exe"
-Copy-Item -Path $UnifiedExe -Destination (Join-Path $AbsoluteOutputDir $SetupExeName) -Force
-Copy-Item -Path $UnifiedExe -Destination (Join-Path $AbsoluteOutputDir $VersionedSetupExeName) -Force
-Write-Host "  - Created standalone single installer: $SetupExeName and $VersionedSetupExeName" -ForegroundColor Green
+$LatestDir = Join-Path $AbsoluteOutputDir "latest"
+if (-not (Test-Path $LatestDir)) {
+    New-Item -ItemType Directory -Path $LatestDir -Force | Out-Null
+}
 
-# Stage ONLY the unified binary for portable archive (single executable in zip, no secondary exes)
-Copy-Item -Path $UnifiedExe -Destination (Join-Path $StagingDir "magicbridge.exe") -Force
+$ArchiveBaseName = "MagicBridge-v$Version-portable"
+$PortableStagingDir = Join-Path $VersionDir "portable"
+if (Test-Path $PortableStagingDir) {
+    Remove-Item -Path $PortableStagingDir -Recurse -Force
+}
+New-Item -ItemType Directory -Path $PortableStagingDir -Force | Out-Null
+
+# Stage the unified binary for portable folder
+Copy-Item -Path $UnifiedExe -Destination (Join-Path $PortableStagingDir "magicbridge.exe") -Force
 
 # Copy locales
-$StagingLocales = Join-Path $StagingDir "locales"
+$StagingLocales = Join-Path $PortableStagingDir "locales"
 New-Item -ItemType Directory -Path $StagingLocales -Force | Out-Null
 Copy-Item -Path (Join-Path $LocalesSrc "en.toml") -Destination $StagingLocales -Force
 Copy-Item -Path (Join-Path $LocalesSrc "it.toml") -Destination $StagingLocales -Force
 
 # Copy documentation & license
-Copy-Item -Path $ReadmeSrc -Destination $StagingDir -Force
-Copy-Item -Path $LicenseSrc -Destination $StagingDir -Force
+Copy-Item -Path $ReadmeSrc -Destination $PortableStagingDir -Force
+Copy-Item -Path $LicenseSrc -Destination $PortableStagingDir -Force
 if (Test-Path $UserGuideSrc) {
-    Copy-Item -Path $UserGuideSrc -Destination $StagingDir -Force
+    Copy-Item -Path $UserGuideSrc -Destination $PortableStagingDir -Force
 }
 
-Write-Host "Staging folder populated at: $StagingDir" -ForegroundColor Green
+# Copy standalone setup executables into version directory
+$SetupExeName = "MagicBridge-Setup.exe"
+$VersionedSetupExeName = "MagicBridge-v$Version-Setup.exe"
+Copy-Item -Path $UnifiedExe -Destination (Join-Path $VersionDir $SetupExeName) -Force
+Copy-Item -Path $UnifiedExe -Destination (Join-Path $VersionDir $VersionedSetupExeName) -Force
+Write-Host "  - Created versioned release folder: $VersionDir" -ForegroundColor Green
+Write-Host "  - Staged portable directory: $PortableStagingDir" -ForegroundColor Green
+Write-Host "  - Created setup installers: $SetupExeName and $VersionedSetupExeName" -ForegroundColor Green
 
 # 4. Create ZIP package
-Write-Host "`n[4/5] Creating ZIP package..." -ForegroundColor Cyan
-$ZipFilePath = Join-Path $AbsoluteOutputDir "$ArchiveBaseName.zip"
-if (Test-Path $ZipFilePath) {
-    Remove-Item -Path $ZipFilePath -Force
+Write-Host "`n[4/5] Creating ZIP packages..." -ForegroundColor Cyan
+$VersionZipFilePath = Join-Path $VersionDir "$ArchiveBaseName.zip"
+if (Test-Path $VersionZipFilePath) {
+    Remove-Item -Path $VersionZipFilePath -Force
 }
 
-Compress-Archive -Path "$StagingDir\*" -DestinationPath $ZipFilePath -CompressionLevel Optimal
+Compress-Archive -Path "$PortableStagingDir\*" -DestinationPath $VersionZipFilePath -CompressionLevel Optimal
 
-# Cleanup staging directory
-Remove-Item -Path (Join-Path $AbsoluteOutputDir "staging") -Recurse -Force
+# Sync release artifacts into root dist\ and dist\latest\ for GitHub Actions CI and convenience
+Copy-Item -Path (Join-Path $VersionDir $SetupExeName) -Destination (Join-Path $AbsoluteOutputDir $SetupExeName) -Force
+Copy-Item -Path (Join-Path $VersionDir $VersionedSetupExeName) -Destination (Join-Path $AbsoluteOutputDir $VersionedSetupExeName) -Force
+Copy-Item -Path $VersionZipFilePath -Destination (Join-Path $AbsoluteOutputDir "$ArchiveBaseName.zip") -Force
 
-$ZipItem = Get-Item $ZipFilePath
+Copy-Item -Path (Join-Path $VersionDir $SetupExeName) -Destination (Join-Path $LatestDir $SetupExeName) -Force
+Copy-Item -Path (Join-Path $VersionDir $VersionedSetupExeName) -Destination (Join-Path $LatestDir $VersionedSetupExeName) -Force
+Copy-Item -Path $VersionZipFilePath -Destination (Join-Path $LatestDir "$ArchiveBaseName.zip") -Force
+$LatestPortable = Join-Path $LatestDir "portable"
+if (Test-Path $LatestPortable) {
+    Remove-Item -Path $LatestPortable -Recurse -Force
+}
+Copy-Item -Path $PortableStagingDir -Destination $LatestDir -Recurse -Force
+
+# Generate SHA-256 sums in VersionDir
+Get-FileHash -Path "$VersionDir\*.exe", "$VersionDir\*.zip" -Algorithm SHA256 |
+    Select-Object Hash, @{Name="Path"; Expression={Split-Path -Leaf $_.Path}} |
+    ForEach-Object { "$($_.Hash)  $($_.Path)" } |
+    Out-File -FilePath (Join-Path $VersionDir "SHA256SUMS.txt") -Encoding utf8
+
+$ZipItem = Get-Item $VersionZipFilePath
+$ZipFilePath = $VersionZipFilePath
 $ZipSizeMB = [math]::Round($ZipItem.Length / 1MB, 2)
 
 # 5. Optional Inno Setup compilation

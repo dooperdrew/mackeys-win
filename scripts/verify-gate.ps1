@@ -135,9 +135,13 @@ switch ($Stack) {
 
         # Compilation & Release Build
         if (($Mode -eq "Full") -and (-not $SkipBuild)) {
-            Invoke-Stage "Release Compilation" {
-                cargo build --release
-                if ($LASTEXITCODE -ne 0) { throw "cargo build --release failed" }
+            Invoke-Stage "Release Compilation & Packaging" {
+                cargo build --workspace --release
+                if ($LASTEXITCODE -ne 0) { throw "cargo build --workspace --release failed" }
+                $PackageScript = Join-Path $PSScriptRoot "package-release.ps1"
+                if (Test-Path $PackageScript) {
+                    & powershell -ExecutionPolicy Bypass -File $PackageScript -SkipBuild
+                }
             }
         }
     }
