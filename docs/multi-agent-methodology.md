@@ -66,11 +66,27 @@ In a multi-agent environment, having multiple agents write directly to the same 
 1. **The Lead Orchestrator Agent (Sole Committer):**
    - The **ONLY** entity authorized to run `git commit`, `git push`, edit git remotes, modify `origin main`, create GitHub Releases, or close GitHub Issues.
    - Analyzes tasks for dependency orthogonalities.
-   - Executes the final integration verification gate on the combined code.
+   - Executes the final integration verification gate (`scripts/verify-gate.ps1 -Mode Full`) on the combined code.
 2. **Worker Agents (`magicbridge-worker`):**
-   - Work strictly in isolated git worktrees created via `Workspace: "branch"`.
+   - Work strictly in isolated git worktrees created via `scripts/manage-worktree.ps1` or subagent `Workspace: "branch"`.
    - **Hardcoded prohibition:** Forbidden from running `git commit`, `git push`, `git checkout main`, or `gh issue close`.
+   - Validate intermediate code with the Fast Gate: `scripts/verify-gate.ps1 -Mode Fast`.
    - Deliver changes via structured completion reports.
+
+### Worktree Automation Commands:
+```powershell
+# 1. Spawn isolated parallel worktree for a task:
+powershell -ExecutionPolicy Bypass -File .\scripts\manage-worktree.ps1 -Action New -Task "M2.3"
+
+# 2. Run fast incremental gate inside the worktree:
+powershell -ExecutionPolicy Bypass -File .\scripts\manage-worktree.ps1 -Action Gate -Task "M2.3" -Mode Fast
+
+# 3. Merge verified branch into main (Sole Committer):
+powershell -ExecutionPolicy Bypass -File .\scripts\manage-worktree.ps1 -Action Merge -Task "M2.3"
+
+# 4. Clean up worktree:
+powershell -ExecutionPolicy Bypass -File .\scripts\manage-worktree.ps1 -Action Remove -Task "M2.3"
+```
 
 ---
 

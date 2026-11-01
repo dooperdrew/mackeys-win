@@ -127,22 +127,14 @@ Before writing or modifying any code, the agent MUST read:
   - Launching `magicbridge.exe` directly MUST ALWAYS open the Settings Panel directly without hijacking or blocking normal application access.
 
 ### D. Verification Gate (MUST PASS Locally)
-Before finishing any turn or committing, the Lead Agent MUST run and verify clean output:
+Workers validate their intermediate changes using the **Fast Gate**:
 ```powershell
-# 0. Ensure resilient environment PATH
-$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User') + ";$env:USERPROFILE\.cargo\bin"
-
-# 1. Format verification
-cargo fmt --all -- --check
-
-# 2. Strict linter (warnings are treated as errors)
-cargo clippy --workspace --all-targets -- -D warnings
-
-# 3. Full test suite (use --test-threads=1 if testing concurrent named pipes/hooks)
-cargo test --workspace -- --test-threads=1
-
-# 4. Release compilation check
-cargo build --workspace --release
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-gate.ps1 -Mode Fast
+```
+For parallel tasks, workers operate inside isolated worktrees (`.\scripts\manage-worktree.ps1 -Action New -Task <id>`).
+Before finishing any turn or committing, the Lead Sole Committer MUST run and verify the **Full Gate**:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-gate.ps1 -Mode Full
 ```
 
 ### E. Post-Execution & Documentation Synchronization (Lead Agent Only)

@@ -1,0 +1,62 @@
+# =============================================================================
+# ui-qa-tester Session Configuration Template
+# Repository: {{REPO_URL}}
+# Run with: ui-qa-cli crawl --config qa-session.toml (or via ui-qa-ui Dashboard)
+# =============================================================================
+
+session_name = "{{PROJECT_NAME}}-qa"
+
+# Path to the compiled application binary or web dev server
+# Desktop Native: 'target\release\{{PROJECT_NAME}}.exe'
+# Fullstack Web: 'http://localhost:3000' (when launched in Chromium/WebView2)
+target_exe = 'target\release\{{PROJECT_NAME}}.exe'
+target_args = []
+
+# Window title filter to verify or attach
+target_window_title = "{{PROJECT_NAME}}"
+
+# Execution mode: "autonomous_crawl" (auto-explore UI) or "goal_scenario" (follow [[goals]])
+mode = "autonomous_crawl"
+
+# Focus mode: "background" (strictly non-intrusive, never steals mouse/keyboard)
+focus_mode = "background"
+
+# Maximum UI exploration steps
+max_steps = 30
+
+# Safety blocklist regex preventing accidental destructive clicks
+destructive_control_regex = '(?i)\b(delete|format|factory\s*reset|erase|wipe|uninstall|drop\s*table)\b'
+
+# Report and annotated screenshot output directory
+output_dir = "qa-reports"
+
+# Target GitHub repository for automated issue reporting
+target_github_repo = "{{REPO_URL}}"
+
+# UI & report locale ("en")
+locale = "en"
+
+[hardware]
+capture_stdout = true
+capture_stderr = true
+log_files = []
+correlation_pre_window_ms = 50
+correlation_post_window_ms = 1500
+ack_patterns = [
+    '(?i)\b(ack|ok|connected|ready|bound|synced|applied|saved|success)\b',
+]
+error_patterns = [
+    '(?i)\b(err|error|fail|failed|timeout|panic|disconnected|unreachable|denied)\b',
+]
+
+[ai]
+provider = "heuristics_only"
+
+# Example goal scenarios (uncomment and customize for your UI navigation):
+# [[goals]]
+# description = "Click Settings tab"
+# expected_ui_text = "Settings"
+
+# [[goals]]
+# description = "Verify theme toggle button"
+# expected_ui_text = "Dark Mode"
