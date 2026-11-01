@@ -486,24 +486,25 @@ impl InstallerApp {
     /// Refreshes keyboard connection status and battery state from IPC or direct HID probing.
     pub fn refresh_hardware_probe(&mut self) {
         let ipc = crate::ipc::SettingsIpc::new();
-        if let Some(status) = ipc.query_status() {
-            self.is_connected_probe = status.is_connected;
-            self.battery_probe = status.battery_percent;
-            if let Some(detected) = magicbridge_agent::detect_connected_apple_model() {
-                self.selected_model = detected;
-            }
-        } else {
-            // Daemon is not running yet during installation wizard: probe hardware directly!
-            let detected = magicbridge_agent::detect_connected_apple_model();
-            let keyboards = magicbridge_agent::probe_connected_apple_keyboards();
-            self.is_connected_probe = detected.is_some() || !keyboards.is_empty();
-            if let Some(m) = detected {
-                self.selected_model = m;
-            }
-            self.battery_probe =
-                magicbridge_agent::query_battery(&std::collections::HashSet::new())
-                    .map(|b| b.percentage);
+        let daemon_status = ipc.query_status();
+        let hardware_detected = magicbridge_agent::detect_connected_apple_model();
+        let keyboards = magicbridge_agent::probe_connected_apple_keyboards();
+
+        self.is_connected_probe = daemon_status.as_ref().is_some_and(|s| s.is_connected)
+            || hardware_detected.is_some()
+            || !keyboards.is_empty();
+
+        if let Some(m) = hardware_detected {
+            self.selected_model = m;
         }
+
+        self.battery_probe = daemon_status
+            .as_ref()
+            .and_then(|s| s.battery_percent)
+            .or_else(|| {
+                magicbridge_agent::query_battery(&std::collections::HashSet::new())
+                    .map(|b| b.percentage)
+            });
     }
     fn render_step_welcome(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.heading("Welcome to the MagicBridge Setup Wizard");
@@ -710,6 +711,10 @@ impl InstallerApp {
     }
 
     fn render_step_first_setup(&mut self, ui: &mut egui::Ui, _ctx: &egui::Context) {
+        if !self.is_connected_probe {
+            self.refresh_hardware_probe();
+        }
+
         ui.heading("First-Run Keyboard Setup");
         ui.label("Configure your initial keyboard preferences (you can change them anytime in Settings):");
         ui.add_space(6.0);

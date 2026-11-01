@@ -420,19 +420,23 @@ impl App for MagicBridgeApp {
             crate::set_accessible_name(ui, scroll_output.id, "Settings Content Area");
         });
 
-        // Fast repaint during active Hardware QA listening; periodic otherwise
-        if self.current_tab == SettingsTab::HardwareQa && self.qa_state.is_listening {
-            ctx.request_repaint_after(Duration::from_millis(50));
-        } else {
-            qa_view::remove_qa_hook();
-            ctx.request_repaint_after(Duration::from_millis(1500));
+        if self.current_tab != SettingsTab::HardwareQa && self.qa_state.was_paused_by_qa {
+            let ipc = crate::ipc::SettingsIpc::new();
+            let _ = ipc.set_paused(false);
+            self.qa_state.was_paused_by_qa = false;
         }
+
+        ctx.request_repaint_after(Duration::from_millis(1500));
     }
 }
 
 impl Drop for MagicBridgeApp {
     fn drop(&mut self) {
-        qa_view::remove_qa_hook();
+        if self.qa_state.was_paused_by_qa {
+            let ipc = crate::ipc::SettingsIpc::new();
+            let _ = ipc.set_paused(false);
+            self.qa_state.was_paused_by_qa = false;
+        }
     }
 }
 

@@ -44,6 +44,7 @@ pub const IDT_BATTERY_TIMER: usize = 100;
 /// Internal state owned by the window procedure.
 struct WindowData {
     state: DaemonState,
+    shared_state: Option<std::sync::Arc<std::sync::Mutex<DaemonState>>>,
     tray: Option<TrayIcon>,
     device_notify: Option<DeviceNotificationHandle>,
     taskbar_created_msg: u32,
@@ -57,6 +58,15 @@ struct WindowData {
 }
 
 impl WindowData {
+    /// Synchronizes the window procedure's live state to the IPC shared state.
+    fn sync_to_shared_state(&self) {
+        if let Some(ref shared) = self.shared_state
+            && let Ok(mut lock) = shared.lock()
+        {
+            *lock = self.state.clone();
+        }
+    }
+
     /// Synchronizes the compiled mapping table with the active profile.
     fn recompile_active_table(&self) {
         if let Some(profile) = self.state.config.active_profile() {
@@ -103,6 +113,7 @@ impl WindowData {
             if let Some(ref mut tray) = self.tray {
                 tray.update(&self.state);
             }
+            self.sync_to_shared_state();
             return;
         }
 
@@ -117,6 +128,7 @@ impl WindowData {
 
             self.check_low_battery_notification(old_pct, status);
         }
+        self.sync_to_shared_state();
     }
 
     /// Checks battery notifications: cable connect/disconnect and 2-tier low battery (M15.2, F6.2).
@@ -227,7 +239,10 @@ pub struct MessageWindow {
 
 impl MessageWindow {
     /// Registers the window class and creates the hidden message window.
-    pub fn create(state: DaemonState) -> Result<Self, windows::core::Error> {
+    pub fn create(
+        state: DaemonState,
+        shared_state: Option<std::sync::Arc<std::sync::Mutex<DaemonState>>>,
+    ) -> Result<Self, windows::core::Error> {
         // SAFETY: RegisterWindowMessageW registers or retrieves the message ID for TaskbarCreated.
         let taskbar_created_msg = unsafe { RegisterWindowMessageW(TASKBAR_CREATED_STR) };
 
@@ -262,6 +277,7 @@ impl MessageWindow {
         let osd = crate::osd::OsdOverlay::new().ok();
         let window_data = Box::new(WindowData {
             state,
+            shared_state,
             tray: None,
             device_notify: None,
             taskbar_created_msg,
@@ -388,6 +404,7 @@ unsafe extern "system" fn wnd_proc(
             // 5. Setup periodic battery timer and perform initial battery read (F6.1..F6.3).
             data.setup_battery_timer(hwnd);
             data.poll_battery();
+            data.sync_to_shared_state();
             LRESULT(0)
         }
         WM_DEVICECHANGE => {
@@ -491,6 +508,7 @@ unsafe extern "system" fn wnd_proc(
                 }
                 _ => {}
             }
+            data.sync_to_shared_state();
             LRESULT(0)
         }
         crate::game_mode::WM_GAME_MODE_EVENT => {
@@ -648,6 +666,7 @@ unsafe extern "system" fn wnd_proc(
                 }
                 _ => {}
             }
+            data.sync_to_shared_state();
             LRESULT(0)
         }
         WM_DESTROY => {
@@ -737,8 +756,8 @@ mod tests {
         let config = Config::default();
         let state = DaemonState::new(config, None);
 
-        let window =
-            MessageWindow::create(state).expect("Creating hidden message window should succeed");
+        let window = MessageWindow::create(state, None)
+            .expect("Creating hidden message window should succeed");
         assert!(!window.hwnd().is_invalid());
 
         drop(window);
@@ -751,8 +770,8 @@ mod tests {
         let config = Config::default();
         let state = DaemonState::new(config, None);
 
-        let window =
-            MessageWindow::create(state).expect("Creating hidden message window should succeed");
+        let window = MessageWindow::create(state, None)
+            .expect("Creating hidden message window should succeed");
 
         // SAFETY: Sending test messages to our own hidden test window on this thread.
         unsafe {

@@ -10,9 +10,6 @@
 use std::collections::{HashSet, VecDeque};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::Mutex;
-#[cfg(windows)]
-use std::sync::atomic::{AtomicIsize, Ordering};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use egui::{
@@ -140,6 +137,8 @@ pub struct HardwareQaViewState {
     pub selected_category: Option<QaCategory>,
     /// Last verified key ID and timestamp for deduplicating fast hardware auto-repeat.
     pub last_key: Option<(String, Instant)>,
+    /// Whether daemon remapping was paused during this active QA session.
+    pub was_paused_by_qa: bool,
 }
 
 impl Default for HardwareQaViewState {
@@ -168,6 +167,7 @@ impl HardwareQaViewState {
             export_status: None,
             selected_category: None,
             last_key: None,
+            was_paused_by_qa: false,
         }
     }
 
@@ -179,6 +179,7 @@ impl HardwareQaViewState {
         self.export_status = None;
         self.selected_category = None;
         self.last_key = None;
+        self.was_paused_by_qa = false;
     }
 
     /// Marks a physical key as verified and logs the keypress event.
@@ -367,103 +368,6 @@ pub fn map_text_to_a1843_id(text: &str) -> Option<&'static str> {
         "=" => Some("Equals"),
         _ => None,
     }
-}
-
-/// A raw low-level keyboard event intercepted by the passive QA hook before any remapping.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct RawQaEvent {
-    pub vk: u16,
-    pub scancode: u16,
-    pub extended: bool,
-    pub is_down: bool,
-}
-
-static QA_EVENT_QUEUE: Mutex<Vec<RawQaEvent>> = Mutex::new(Vec::new());
-
-#[cfg(windows)]
-static QA_HOOK_HANDLE: AtomicIsize = AtomicIsize::new(0);
-
-/// Installs the passive pre-remap WH_KEYBOARD_LL hook if not already active.
-#[cfg(windows)]
-pub fn ensure_qa_hook_installed() {
-    if QA_HOOK_HANDLE.load(Ordering::Acquire) != 0 {
-        return;
-    }
-    // SAFETY: SetWindowsHookExW installs a low-level keyboard hook procedure on the current thread's message pump.
-    let hhook = unsafe {
-        windows::Win32::UI::WindowsAndMessaging::SetWindowsHookExW(
-            windows::Win32::UI::WindowsAndMessaging::WH_KEYBOARD_LL,
-            Some(qa_low_level_keyboard_proc),
-            None,
-            0,
-        )
-    };
-    if let Ok(hook) = hhook {
-        QA_HOOK_HANDLE.store(hook.0 as isize, Ordering::Release);
-    }
-}
-
-/// Removes the passive WH_KEYBOARD_LL hook.
-#[cfg(windows)]
-pub fn remove_qa_hook() {
-    let handle = QA_HOOK_HANDLE.swap(0, Ordering::AcqRel);
-    if handle != 0 {
-        // SAFETY: Handle was returned by SetWindowsHookExW and is valid to unhook.
-        unsafe {
-            let _ = windows::Win32::UI::WindowsAndMessaging::UnhookWindowsHookEx(
-                windows::Win32::UI::WindowsAndMessaging::HHOOK(handle as *mut _),
-            );
-        }
-    }
-}
-
-/// No-op fallback for non-Windows platforms.
-#[cfg(not(windows))]
-pub fn ensure_qa_hook_installed() {}
-
-/// No-op fallback for non-Windows platforms.
-#[cfg(not(windows))]
-pub fn remove_qa_hook() {}
-
-#[cfg(windows)]
-unsafe extern "system" fn qa_low_level_keyboard_proc(
-    ncode: i32,
-    wparam: windows::Win32::Foundation::WPARAM,
-    lparam: windows::Win32::Foundation::LPARAM,
-) -> windows::Win32::Foundation::LRESULT {
-    use windows::Win32::UI::WindowsAndMessaging::{
-        CallNextHookEx, KBDLLHOOKSTRUCT, WM_KEYDOWN, WM_SYSKEYDOWN,
-    };
-
-    if ncode >= 0 && lparam.0 != 0 {
-        // SAFETY: When ncode >= 0, Windows guarantees lparam points to a valid KBDLLHOOKSTRUCT.
-        let info = unsafe { &*(lparam.0 as *const KBDLLHOOKSTRUCT) };
-        let is_injected = (info.flags.0 & 0x10) != 0
-            || info.dwExtraInfo == magicbridge_core::key::MAGICBRIDGE_EXTRA_INFO;
-
-        // Strictly capture physical user input (ignore injected synthetic keys)
-        if !is_injected {
-            let msg = wparam.0 as u32;
-            let is_down = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
-            let extended = (info.flags.0 & 0x01) != 0;
-            let vk = info.vkCode as u16;
-            let scancode = info.scanCode as u16;
-
-            if let Ok(mut queue) = QA_EVENT_QUEUE.lock()
-                && queue.len() < 256
-            {
-                queue.push(RawQaEvent {
-                    vk,
-                    scancode,
-                    extended,
-                    is_down,
-                });
-            }
-        }
-    }
-
-    // SAFETY: Forwarding hook chain with unmodified parameters is always safe.
-    unsafe { CallNextHookEx(None, ncode, wparam, lparam) }
 }
 
 /// Matches a raw physical hardware event (VK, scancode, extended) to an A1843 physical key ID.
@@ -994,61 +898,83 @@ fn render_qa_visual_keyboard(ui: &mut Ui, state: &mut HardwareQaViewState) {
 pub fn show(ui: &mut Ui, state: &mut HardwareQaViewState, i18n: &I18n) -> bool {
     // 1. Keyboard event listener mode
     if state.is_listening {
-        ensure_qa_hook_installed();
+        // Pause daemon remapping while on Hardware QA tab so physical keys reach the window unmodified
+        if !state.was_paused_by_qa {
+            let ipc = crate::ipc::SettingsIpc::new();
+            let _ = ipc.set_paused(true);
+            state.was_paused_by_qa = true;
+        }
 
-        // Drain raw events from the passive WH_KEYBOARD_LL hook (pre-remap physical input)
-        let raw_events: Vec<RawQaEvent> = {
-            if let Ok(mut q) = QA_EVENT_QUEUE.lock() {
-                q.drain(..).collect()
-            } else {
-                Vec::new()
+        let mut pressed_ids: Vec<&'static str> = Vec::new();
+
+        // Capture standard window keypress events (safe, in-process, zero OS hooks)
+        ui.input(|i| {
+            for event in &i.events {
+                if let egui::Event::Key {
+                    key,
+                    physical_key,
+                    pressed: true,
+                    repeat: false,
+                    ..
+                } = event
+                    && let Some(id) = map_egui_key_to_a1843_id(*key, *physical_key)
+                {
+                    pressed_ids.push(id);
+                }
             }
-        };
+        });
 
-        for ev in raw_events {
-            if !ev.is_down {
-                continue;
-            }
-            if let Some(id) = map_raw_event_to_a1843_id(ev.vk, ev.scancode, ev.extended) {
-                let is_repeat = state.last_key.as_ref().is_some_and(|(last_id, time)| {
-                    last_id == id && time.elapsed().as_millis() < 120
-                });
+        // Query modifier and numpad states using thread-safe Win32 GetKeyState
+        #[cfg(windows)]
+        {
+            use windows::Win32::UI::Input::KeyboardAndMouse::GetKeyState;
+            const WIN_KEYS: &[(u16, &str)] = &[
+                (VK_LSHIFT, "LeftShift"),
+                (VK_RSHIFT, "RightShift"),
+                (VK_LCONTROL, "LeftControl"),
+                (VK_RCONTROL, "RightControl"),
+                (VK_LMENU, "LeftOption"),
+                (VK_RMENU, "RightOption"),
+                (VK_LWIN, "LeftCommand"),
+                (VK_RWIN, "RightCommand"),
+                (VK_CAPITAL, "CapsLock"),
+                (VK_NUMPAD0, "Num0"),
+                (VK_NUMPAD1, "Num1"),
+                (VK_NUMPAD2, "Num2"),
+                (VK_NUMPAD3, "Num3"),
+                (VK_NUMPAD4, "Num4"),
+                (VK_NUMPAD5, "Num5"),
+                (VK_NUMPAD6, "Num6"),
+                (VK_NUMPAD7, "Num7"),
+                (VK_NUMPAD8, "Num8"),
+                (VK_NUMPAD9, "Num9"),
+                (VK_DECIMAL, "NumDecimal"),
+                (VK_ADD, "NumAdd"),
+                (VK_SUBTRACT, "NumSubtract"),
+                (VK_MULTIPLY, "NumMultiply"),
+                (VK_DIVIDE, "NumDivide"),
+                (VK_NUMLOCK, "Clear"),
+            ];
 
-                state.tested_keys.insert(id.to_string());
-                state.last_key = Some((id.to_string(), Instant::now()));
-
-                if !is_repeat {
-                    state.mark_key_verified(id, ev.vk, ev.scancode, ev.extended);
+            for &(vk, id) in WIN_KEYS {
+                // SAFETY: GetKeyState queries current thread message queue without installing any system hooks.
+                let s = unsafe { GetKeyState(vk as i32) };
+                if (s as u16 & 0x8000) != 0 && !state.tested_keys.contains(id) {
+                    pressed_ids.push(id);
                 }
             }
         }
 
-        // Non-Windows fallback
-        #[cfg(not(windows))]
-        ui.input(|i| {
-            for event in &i.events {
-                match event {
-                    egui::Event::Key {
-                        key,
-                        physical_key,
-                        pressed: true,
-                        ..
-                    } => {
-                        if let Some(id) = map_egui_key_to_a1843_id(*key, *physical_key) {
-                            state.mark_key_verified(id, 0, 0, false);
-                        }
-                    }
-                    egui::Event::Text(text) => {
-                        if let Some(id) = map_text_to_a1843_id(text) {
-                            state.mark_key_verified(id, 0, 0, false);
-                        }
-                    }
-                    _ => {}
-                }
+        for id in pressed_ids {
+            if !state.tested_keys.contains(id) {
+                let vk = state.model.find_by_id(id).map_or(0, |k| k.vk);
+                state.mark_key_verified(id, vk, 0, false);
             }
-        });
-    } else {
-        remove_qa_hook();
+        }
+    } else if state.was_paused_by_qa {
+        let ipc = crate::ipc::SettingsIpc::new();
+        let _ = ipc.set_paused(false);
+        state.was_paused_by_qa = false;
     }
 
     // 2. Header and Controls Toolbar
@@ -1265,7 +1191,11 @@ pub fn show(ui: &mut Ui, state: &mut HardwareQaViewState, i18n: &I18n) -> bool {
 
             if ui.add(finish_btn).clicked() {
                 finished = true;
-                remove_qa_hook();
+                if state.was_paused_by_qa {
+                    let ipc = crate::ipc::SettingsIpc::new();
+                    let _ = ipc.set_paused(false);
+                    state.was_paused_by_qa = false;
+                }
             }
         });
     });

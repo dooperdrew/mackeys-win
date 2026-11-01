@@ -85,7 +85,7 @@ pub fn run_daemon() -> i32 {
     let _action_worker = action_worker::start_action_worker();
 
     // 4. Create hidden Win32 message window & system tray icon.
-    let window = match window::MessageWindow::create(state) {
+    let window = match window::MessageWindow::create(state, Some(shared_state.clone())) {
         Ok(w) => w,
         Err(e) => {
             eprintln!("Failed to create background message window: {e}");

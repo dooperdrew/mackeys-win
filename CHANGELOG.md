@@ -6,6 +6,17 @@ All development steps, hardware discoveries, architectural decisions, and commit
 
 ## 2026-11-01 — Milestone M19: Field-Test Fixes, Direct Hardware Detection & Honest Pre-Remap Physical QA Capture (v0.4.1)
 
+### Emergency Stability Hotfix & Dist Pipeline Reorganization
+- **Elimination of Global Hook in GUI Process (Fixes PC Freezing & System-Wide Lockups):**
+  - *Problem:* An experimental `WH_KEYBOARD_LL` low-level input hook was introduced inside the `egui`/`winit` Settings process (`qa_view.rs`). Running a global hook on an interactive rendering thread caused hook contention, triggered Windows low-level input timeouts, and completely froze keyboard input across the operating system. Furthermore, it filtered out injected events with `MAGICBRIDGE_EXTRA_INFO`, causing 0 keystrokes to register.
+  - *Fix:* Completely removed `WH_KEYBOARD_LL` and all Windows hooks from `magicbridge-settings`. Replaced with in-window `egui::Event::Key` and thread-local `GetKeyState`. When entering the Hardware QA tab, the GUI now sends `set_paused(true)` to the background daemon via IPC (and `set_paused(false)` when leaving), allowing pure physical keystrokes to pass cleanly to the window without any global system interception or risk of PC freezing.
+- **Daemon IPC State Synchronization (Fixes Wizard Hardware Detection):**
+  - *Problem:* `MessageWindow` internal state (`data.state`) mutated upon USB/Bluetooth plug events and battery polling, but never synchronized back to `shared_state` (`Arc<Mutex<DaemonState>>`). Consequently, IPC clients (Setup Wizard, Settings app) were told the keyboard was disconnected (`is_connected: false`).
+  - *Fix:* Added `sync_to_shared_state()` in `crates/agent/src/window.rs`, invoked whenever connection state, battery percentage, or tray flags mutate. Setup Wizard now reliably detects connected A1843 keyboards both via live IPC and direct HID probing.
+- **Per-Version Release Distribution Pipeline:**
+  - Updated `scripts/package-release.ps1` and `scripts/verify-gate.ps1` so every release generates an isolated versioned folder: `dist\v{Version}\` (e.g. `dist\v0.4.1\`).
+  - Automatically unpacks a ready-to-test standalone portable folder at `dist\v0.4.1\portable\magicbridge.exe` with all resources, so testers can run it immediately without manually unzipping archives. Also maintains `dist\latest\` convenience alias.
+
 ### Objective & Core Fixes
 - **Field-Test Review & Remediation:**
   - Evaluated physical hardware test run logs and owner screenshots from A1843 Italian ISO testing; catalogued all defects and over-claims in [`docs/reviews/2026-11-01-field-test-review.md`](reviews/2026-11-01-field-test-review.md).

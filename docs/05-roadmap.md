@@ -170,7 +170,7 @@ Goal: Extend MagicBridge driverless user-mode capabilities to Apple Magic Mouse 
 - [x] A2 `Clear` mapped to Escape by default so NumLock remains perpetually on _(2026-11-01, closes #33)_
 - [x] A4 Setup Wizard probes hardware directly via agent HID query during install _(2026-11-01, closes #32)_
 - [x] A5/A6 Model-aware options (corner key hidden on full-size A1843), removed "Brightness" promise _(2026-11-01, closes #31)_
-- [x] B1–B4 Hardware QA tab captures physical pre-remap keys via passive WH_KEYBOARD_LL hook with exact scancodes and extended flags _(2026-11-01, closes #34, #35)_
+- [x] B1–B4 Hardware QA tab: zero-hook architecture (pauses daemon via IPC + in-window event capture with GetKeyState) eliminating GUI hook contention and PC freezing _(2026-11-01, closes #34, #35)_
 - [x] B5–B6 QA log deduplication (<120ms repeat), canonical key names for numpad/OEM, clarified Top Function Row label (Esc, F1..F19) _(2026-11-01, closes #30, #36)_
 - [x] E1–E2 Version bump to v0.4.1 and field-test review audit _(2026-11-01)_
 
