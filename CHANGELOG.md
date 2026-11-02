@@ -23,6 +23,11 @@ All development steps, hardware discoveries, architectural decisions, and commit
   - Refreshed [`README.md`](README.md), [`AGENTS.md`](AGENTS.md), and all project specifications across `docs/` to present the cohesive "MacKeys Win" narrative.
   - Added an SEO competitive comparison matrix and search intent FAQ in the README.
 
+- **Verification Gate & Documentation Sync (M21 / Issue #44):**
+  - Completed sync of README.md with v0.4.1 OSD HUD, Per-App profiles, and Game Mode features.
+  - Added Section 6 to `docs/06-qa-and-validation.md` covering test procedures QA-FEAT-01..04.
+  - Cleaned `scripts/verify-gate.ps1` to eliminate dead non-Rust stubs (Node/Python/Go) and PATH noise, focusing the gate strictly on Rust and project template validation. Closes #44.
+
 ---
 
 ## 2026-11-01 — Milestone M19: Field-Test Fixes, Direct Hardware Detection & Honest Pre-Remap Physical QA Capture (v0.4.1)

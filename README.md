@@ -83,6 +83,9 @@ Apple Keyboards are gorgeous pieces of hardware, but when paired with Windows 10
 - **Missing Windows Keys:** Out-of-the-box defaults mapping `F13` &rarr; `Print Screen`, `F14` &rarr; `Scroll Lock`, and `F15` &rarr; `Pause`.
 - **Custom Key & Macro Actions:** Map `F13`–`F19` and `Clear` (`VK_NUMLOCK`) to custom key combos, media actions, or program launches.
 - **Accurate Battery Reporting:** Reads direct battery telemetry from Apple Vendor collection `0xFF00:0x0014` report `0x90` over both USB and Bluetooth, with live tray tooltip percentages and low-battery toast alerts.
+- **On-Screen Display (OSD) HUD:** Press `Fn + Esc` to seamlessly flip between Media Keys and standard F-keys with a sleek, translucent floating HUD.
+- **Per-Application Profile Auto-Switching:** Bind distinct keymaps and modifier layouts to specific games or software (e.g. IDEs vs. games); MacKeys automatically activates them when foreground focus changes.
+- **Game Mode Auto-Pause:** Remappings temporarily pause whenever a fullscreen DirectX or Vulkan game is in the foreground, ensuring native anti-cheat and competitive gaming compatibility.
 - **Named Profiles & Multi-Language Layouts:** Create and swap between named profiles with visual layout previews for `ANSI (US)`, `ISO (Italian)`, `ISO (UK)`, `ISO (German)`, `ISO (French)`, and custom layouts.
 
 ---

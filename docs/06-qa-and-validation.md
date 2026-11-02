@@ -116,6 +116,17 @@ The following tests require physical connection of the Apple Magic Keyboard with
 
 ---
 
+## 6. Advanced Features & Ecosystem Matrix (M15–M18)
+
+| Test ID | Test Category | Target Feature | Test Procedure | Expected Outcome | Pass/Fail |
+|---|---|---|---|---|---|
+| **QA-FEAT-01** | OSD Overlay | `Fn + Esc` Top Row Toggle | With daemon running, press physical `Fn + Esc`. | OSD translucent acrylic window appears immediately showing "Top Row Mode: Media Keys" or "Function Keys", auto-dismissing after 1.5s. | Pending Test |
+| **QA-FEAT-02** | Profiles | Per-App Profile Auto-Switch | Assign a custom profile to `notepad.exe`. Switch focus between Notepad and Desktop. | Foreground WinEvent hook detects process change and dynamically compiles and hot-swaps active mapping table. | Pending Test |
+| **QA-FEAT-03** | Telemetry | Cable & Battery Notifications | Plug/unplug Lightning USB cable; drain battery below configured threshold. | Windows system tray displays balloon notifications on cable state transition and low-battery alert. | Pending Test |
+| **QA-FEAT-04** | Peripherals | Inertial Scroll Math Engine | Execute automated invariant unit tests in `crates/core/src/inertial_scroll.rs`. | Sub-pixel delta accumulator, natural scroll inversion, and exponential decay settle smoothly to zero velocity. | Pass (Automated) |
+
+---
+
 ## 6. Multi-Model Apple Keyboard Hardware Matrix 🔬
 
 > **Claims Follow Evidence:** Models other than the author's physical A1843 are marked **`🔬 [Pending Community Hardware Confirmation]`** until verified by empirical test logs submitted by users via `.github/ISSUE_TEMPLATE/hardware_qa_report.md`. Automated invariant tests are marked `PASS`.

@@ -179,13 +179,13 @@ Goal: Extend MacKeys driverless user-mode capabilities to Apple Magic Mouse and 
 - [x] C2–C3 Keyboard tab layout (fixed right-edge canvas width clipping for numpad Enter, two-row toolbar preventing legend wrap) _(2026-11-01, closes #38)_
 - [ ] C4 Key Editor side panel ergonomics and sizing
 - [ ] C5 Application icon
-- [x] C6 Setup Wizard step 4 redesign (added `< Back` navigation, auto-detect model button) _(2026-11-01, closes #41)_
+- [x] C6 Setup Wizard step 4 redesign (added `< Back` navigation, auto-detect model button) _(2026-11-01, closes #40)_
 - [ ] C7–C8 Readable ISO legends, Live Glow control clarity
 - [ ] C9 `ui-qa-tester` blind spots (glyph check, default window size)
 - [ ] D1–D2 Daemon RAM vs NFR-P1; restate NFR-P4 for unified binary 🔬
 
 ## M21 — Docs & Release Sync
-- [ ] E3–E5 README, QA matrix rows for M15–M18, verify-gate npm noise
+- [x] E3–E5 README, QA matrix rows for M15–M18, verify-gate npm noise _(2026-11-02, closes #44)_
 
 ## M22 — Magic Mouse Integration (target v0.6.0) 🔬
 - [ ] A3 Wire inertial scroll engine to real Magic Mouse input; hide dead settings until then

@@ -28,7 +28,7 @@ param(
     [ValidateSet("Fast", "Full")]
     [string]$Mode = "Fast",
 
-    [ValidateSet("Auto", "Rust", "Node", "Python", "Go", "Template")]
+    [ValidateSet("Auto", "Rust", "Template")]
     [string]$Stack = "Auto",
 
     [switch]$SkipBuild,
@@ -46,13 +46,7 @@ Set-Location $RepoRoot
 # Environment & PATH Resiliency
 # -----------------------------------------------------------------------------
 $KnownPaths = @(
-    (Join-Path $env:USERPROFILE ".cargo\bin"),
-    (Join-Path $env:APPDATA "npm"),
-    (Join-Path $env:LOCALAPPDATA "Programs\Python\Python312"),
-    (Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\Scripts"),
-    (Join-Path $env:LOCALAPPDATA "Programs\Python\Python311"),
-    (Join-Path $env:LOCALAPPDATA "Programs\Python\Python311\Scripts"),
-    "C:\Program Files\Go\bin"
+    (Join-Path $env:USERPROFILE ".cargo\bin")
 )
 
 foreach ($P in $KnownPaths) {
@@ -67,12 +61,6 @@ foreach ($P in $KnownPaths) {
 if ($Stack -eq "Auto") {
     if (Test-Path (Join-Path $RepoRoot "Cargo.toml")) {
         $Stack = "Rust"
-    } elseif (Test-Path (Join-Path $RepoRoot "package.json")) {
-        $Stack = "Node"
-    } elseif ((Test-Path (Join-Path $RepoRoot "pyproject.toml")) -or (Test-Path (Join-Path $RepoRoot "requirements.txt"))) {
-        $Stack = "Python"
-    } elseif (Test-Path (Join-Path $RepoRoot "go.mod")) {
-        $Stack = "Go"
     } else {
         $Stack = "Template"
     }
@@ -144,81 +132,6 @@ switch ($Stack) {
             Invoke-Stage "Release Compilation" {
                 cargo build --release
                 if ($LASTEXITCODE -ne 0) { throw "cargo build --release failed" }
-            }
-        }
-    }
-
-    "Node" {
-        # Formatting & Lint
-        Invoke-Stage "Linter & Code Style" {
-            npm run lint
-            if ($LASTEXITCODE -ne 0) { throw "npm run lint failed" }
-        }
-
-        # Automated Tests
-        Invoke-Stage "Automated Tests" {
-            npm test
-            if ($LASTEXITCODE -ne 0) { throw "npm test failed" }
-        }
-
-        # Build Check
-        if (($Mode -eq "Full") -and (-not $SkipBuild)) {
-            Invoke-Stage "Production Build" {
-                npm run build
-                if ($LASTEXITCODE -ne 0) { throw "npm run build failed" }
-            }
-        }
-    }
-
-    "Python" {
-        # Lint & Format
-        Invoke-Stage "Linter & Format (ruff)" {
-            ruff check .
-            if ($LASTEXITCODE -ne 0) { throw "ruff check failed" }
-            ruff format --check .
-            if ($LASTEXITCODE -ne 0) { throw "ruff format failed" }
-        }
-
-        # Tests
-        Invoke-Stage "Automated Tests (pytest)" {
-            if ($Mode -eq "Fast") {
-                pytest -q -m "not slow" -n auto
-            } else {
-                pytest -n auto
-            }
-            if ($LASTEXITCODE -ne 0) { throw "pytest failed" }
-        }
-
-        # Type Check / Build
-        if (($Mode -eq "Full") -and (-not $SkipBuild)) {
-            Invoke-Stage "Type Check & Build (pyright / uv build)" {
-                if (Get-Command pyright -ErrorAction SilentlyContinue) {
-                    pyright
-                    if ($LASTEXITCODE -ne 0) { throw "pyright type check failed" }
-                }
-            }
-        }
-    }
-
-    "Go" {
-        Invoke-Stage "Format & Vet" {
-            go vet ./...
-            if ($LASTEXITCODE -ne 0) { throw "go vet failed" }
-        }
-
-        Invoke-Stage "Automated Tests" {
-            if ($Mode -eq "Fast") {
-                go test -short ./...
-            } else {
-                go test -race ./...
-            }
-            if ($LASTEXITCODE -ne 0) { throw "go test failed" }
-        }
-
-        if (($Mode -eq "Full") -and (-not $SkipBuild)) {
-            Invoke-Stage "Production Build" {
-                go build ./...
-                if ($LASTEXITCODE -ne 0) { throw "go build failed" }
             }
         }
     }
