@@ -1,7 +1,7 @@
 # =============================================================================
 # ui-qa-tester Session Configuration Template
 # Repository: {{REPO_URL}}
-# Run with: ui-qa-cli crawl --config qa-session.toml (or via ui-qa-ui Dashboard)
+# Run with: ui-qa-cli run --config qa-session.toml (or via ui-qa-ui Dashboard)
 # =============================================================================
 
 session_name = "{{PROJECT_NAME}}-qa"
@@ -35,6 +35,9 @@ target_github_repo = "{{REPO_URL}}"
 
 # UI & report locale ("en")
 locale = "en"
+
+# Initial goal scenario list (empty defaults to autonomous exploration)
+goals = []
 
 [hardware]
 capture_stdout = true

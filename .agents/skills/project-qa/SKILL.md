@@ -38,11 +38,20 @@ Verify `qa-session.toml` in the repository root (copied from `qa-session.templat
 ### Step 3: Run the QA Actuator
 Execute the test run via the repository script:
 ```powershell
+# Standard run using qa-session.toml
 powershell -ExecutionPolicy Bypass -File scripts/run-qa.ps1
+
+# Optional overrides:
+powershell -ExecutionPolicy Bypass -File scripts/run-qa.ps1 -Exe target/release/myapp.exe -MaxSteps 50
+
+# Run self-test against mock hardware controller
+powershell -ExecutionPolicy Bypass -File scripts/run-qa.ps1 -SelfTest
 ```
 
 Or directly via CLI if installed in PATH:
 ```powershell
+ui-qa-cli run --config qa-session.toml
+# Or using the alias:
 ui-qa-cli crawl --config qa-session.toml
 ```
 
