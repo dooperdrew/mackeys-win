@@ -1,11 +1,11 @@
 name: Bug Report
-description: Report a defect, unexpected behavior, or crash in MagicBridge
+description: Report a defect, unexpected behavior, or crash in MacKeys
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report an issue! MagicBridge relies on low-level Win32 hooks and HID reports for the Apple A1843 keyboard. Detailed hardware info helps us reproduce and fix issues quickly.
+        Thanks for taking the time to report an issue! MacKeys relies on low-level Win32 hooks and HID reports for the Apple A1843 keyboard. Detailed hardware info helps us reproduce and fix issues quickly.
   - type: input
     id: os_version
     attributes:

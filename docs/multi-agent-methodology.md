@@ -2,7 +2,7 @@
 
 > **Audience:** AI Engineers, System Architects, Open-Source Contributors, and Autonomous Agents.  
 > **Status:** Canonical Living Document (Milestone 8).  
-> **Repository:** [`https://github.com/DooperDrew/magicbridge`](https://github.com/DooperDrew/magicbridge)
+> **Repository:** [`https://github.com/DooperDrew/mackeys-win`](https://github.com/DooperDrew/mackeys-win)
 
 ---
 
@@ -12,7 +12,7 @@ When building native systems utilities with stringent non-functional constraints
 1. **Context Window Exhaustion & Cognitive Overload:** A single agent or conversational session attempting to hold the entire Win32 API, raw HID specifications, UI rendering loops, and build scripts quickly hits context saturation, resulting in hallucinated APIs or subtle regressions.
 2. **Sequential Development Latency & Token Waste:** Running simple boilerplate generation or documentation tasks on high-reasoning flagship models (e.g., Claude 3.7 Sonnet or Gemini 1.5 Pro) burns unnecessary token budgets, while running low-level kernel/hook synchronization on smaller models leads to memory safety bugs.
 
-**MagicBridge** demonstrates a pioneering, production-grade **Hub-and-Spoke (Lead Orchestrator & Parallel Worker)** methodology. By decomposing tasks into **strictly isolated, dependency-free work packages** and orchestrating multi-tiered AI models running in parallel git worktree branches, the entire project was built and validated with **zero git merge conflicts, 134 automated unit/integration tests passing (100%), and headless stuck-key invariant validation** (with physical hardware matrix validation pending user confirmation).
+**MacKeys** demonstrates a pioneering, production-grade **Hub-and-Spoke (Lead Orchestrator & Parallel Worker)** methodology. By decomposing tasks into **strictly isolated, dependency-free work packages** and orchestrating multi-tiered AI models running in parallel git worktree branches, the entire project was built and validated with **zero git merge conflicts, 134 automated unit/integration tests passing (100%), and headless stuck-key invariant validation** (with physical hardware matrix validation pending user confirmation).
 
 ```mermaid
 flowchart TD
@@ -92,7 +92,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\manage-worktree.ps1 -Action R
 
 ## 4. Phase-by-Phase Parallelization Blueprint
 
-Below are the architectural dependency schemes and execution timelines used throughout the MagicBridge development lifecycle:
+Below are the architectural dependency schemes and execution timelines used throughout the MacKeys development lifecycle:
 
 ### Phase 1: Milestone 1 Parallelization (Skeleton & Autostart)
 
@@ -146,7 +146,7 @@ flowchart TD
 flowchart TD
     subgraph PARALLEL_PHASE_3["Parallel Execution (Milestone 2)"]
         W1["Worker 1: T3-Hook-M2.2 (pro)<br/>Target: crates/agent/src/{hook, injector}.rs<br/>• WH_KEYBOARD_LL zero-allocation hook callback<br/>• SendInput with MAGICBRIDGE_EXTRA_INFO sentinel<br/>• Lock-free stuck-key state tracker<br/>• ISO AltGr 0x21D suppression"]
-        W2["Worker 2: T2-IPC-M2.5 (flash / sonnet)<br/>Target: crates/agent/src/ipc.rs<br/>• Named Pipe IPC server (\\.\pipe\MagicBridge_Agent_IPC)<br/>• Lock-free atomic table hot-swap (arc-swap)<br/>• Status, reload, and pause request handlers"]
+        W2["Worker 2: T2-IPC-M2.5 (flash / sonnet)<br/>Target: crates/agent/src/ipc.rs<br/>• Named Pipe IPC server (\\.\pipe\MacKeys_Agent_IPC)<br/>• Lock-free atomic table hot-swap (arc-swap)<br/>• Status, reload, and pause request handlers"]
     end
     
     LEAD["Lead Orchestrator"] -->|"Spawns Branch 1"| W1
@@ -295,7 +295,7 @@ Only the Lead Agent stages, commits, tags, and pushes to `origin main`.
 
 ## 7. Cloud Multi-Agent Collaboration: GitHub Copilot Agent Integration
 
-While Antigravity subagents provide ultra-low-latency local branch parallelization, MagicBridge also supports cloud-native asynchronous execution via **GitHub Copilot Agent** using a strict division of labor:
+While Antigravity subagents provide ultra-low-latency local branch parallelization, MacKeys also supports cloud-native asynchronous execution via **GitHub Copilot Agent** using a strict division of labor:
 
 ```mermaid
 flowchart TD

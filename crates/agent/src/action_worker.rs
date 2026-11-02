@@ -96,11 +96,11 @@ impl ActionWorkerHandle {
         GLOBAL_ACTION_SENDER.store(Some(Arc::new(tx.clone())));
 
         let thread = thread::Builder::new()
-            .name("MagicBridge-ActionWorker".to_string())
+            .name("MacKeys-ActionWorker".to_string())
             .spawn(move || {
                 run_action_worker_loop(rx);
             })
-            .expect("Failed to spawn MagicBridge action worker thread");
+            .expect("Failed to spawn MacKeys action worker thread");
 
         Self {
             sender: tx,
@@ -142,7 +142,7 @@ fn run_action_worker_loop(rx: Receiver<ActionMessage>) {
                 if let Some(action) = crate::hook::get_active_custom_action(id)
                     && let Err(err) = execute_action(&action)
                 {
-                    eprintln!("[MagicBridge] Custom action execution error: {err}");
+                    eprintln!("[MacKeys] Custom action execution error: {err}");
                 }
             }
             ActionMessage::Shutdown => {

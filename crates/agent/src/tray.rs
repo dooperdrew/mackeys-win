@@ -372,11 +372,11 @@ mod tests {
     #[test]
     fn sz_tip_copying_and_truncation() {
         let mut buf = [0u16; 128];
-        copy_to_sz_tip(&mut buf, "MagicBridge Test Tooltip");
+        copy_to_sz_tip(&mut buf, "MacKeys Test Tooltip");
 
         let s = String::from_utf16_lossy(&buf);
         let trimmed = s.trim_end_matches('\0');
-        assert_eq!(trimmed, "MagicBridge Test Tooltip");
+        assert_eq!(trimmed, "MacKeys Test Tooltip");
 
         // Test buffer truncation at 127 chars + null terminator
         let long_str = "a".repeat(200);

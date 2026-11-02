@@ -1,4 +1,4 @@
-//! Native Windows GUI Installer, Uninstaller, and Process Manager for MagicBridge.
+//! Native Windows GUI Installer, Uninstaller, and Process Manager for MacKeys.
 //!
 //! Provides a progressive, multi-step Windows Setup Wizard:
 //! - Step 0: Welcome & Mode Selection (Install, or if already installed: Reinstall vs Uninstall)
@@ -32,9 +32,9 @@ pub fn default_install_dir() -> PathBuf {
     if let Ok(local_appdata) = std::env::var("LOCALAPPDATA") {
         PathBuf::from(local_appdata)
             .join("Programs")
-            .join("MagicBridge")
+            .join("MacKeys")
     } else {
-        PathBuf::from(r"C:\Program Files\MagicBridge")
+        PathBuf::from(r"C:\Program Files\MacKeys")
     }
 }
 
@@ -57,9 +57,12 @@ pub fn ensure_daemon_running() {
         return;
     }
 
-    let installed_exe = default_install_dir().join("magicbridge.exe");
+    let installed_exe = default_install_dir().join("mackeys.exe");
+    let legacy_exe = default_install_dir().join("magicbridge.exe");
     let exe_to_run = if installed_exe.exists() {
         installed_exe
+    } else if legacy_exe.exists() {
+        legacy_exe
     } else if let Ok(exe_path) = std::env::current_exe() {
         exe_path
     } else {
@@ -138,12 +141,12 @@ pub fn perform_install(options: &InstallOptions) -> Result<(), String> {
     std::fs::create_dir_all(&options.install_dir)
         .map_err(|e| format!("Failed to create install directory: {e}"))?;
 
-    let dest_exe = options.install_dir.join("magicbridge.exe");
+    let dest_exe = options.install_dir.join("mackeys.exe");
 
     // Terminate running instances before overwrite if present
-    if dest_exe.exists() {
+    if dest_exe.exists() || options.install_dir.join("magicbridge.exe").exists() {
         let _ = Command::new("taskkill")
-            .args(["/F", "/IM", "magicbridge.exe"])
+            .args(["/F", "/IM", "mackeys.exe", "/IM", "magicbridge.exe"])
             .status();
         std::thread::sleep(std::time::Duration::from_millis(300));
     }
@@ -152,29 +155,29 @@ pub fn perform_install(options: &InstallOptions) -> Result<(), String> {
     std::fs::copy(&current_exe, &dest_exe)
         .map_err(|e| format!("Failed to copy binary to destination: {e}"))?;
 
-    // Create Start Menu Shortcuts in dedicated "MagicBridge" folder:
-    // 1. "MagicBridge" -> opens Settings
-    // 2. "Uninstall MagicBridge" -> runs magicbridge.exe --uninstall
+    // Create Start Menu Shortcuts in dedicated "MacKeys" folder:
+    // 1. "MacKeys" -> opens Settings
+    // 2. "Uninstall MacKeys" -> runs magicbridge.exe --uninstall
     if options.create_start_menu_shortcut
         && let Ok(appdata) = std::env::var("APPDATA")
     {
         let start_menu_folder =
-            PathBuf::from(appdata).join(r"Microsoft\Windows\Start Menu\Programs\MagicBridge");
+            PathBuf::from(appdata).join(r"Microsoft\Windows\Start Menu\Programs\MacKeys");
         let _ = std::fs::create_dir_all(&start_menu_folder);
 
-        let app_shortcut = start_menu_folder.join("MagicBridge.lnk");
+        let app_shortcut = start_menu_folder.join("MacKeys.lnk");
         let _ = create_shortcut(
             &dest_exe,
             &app_shortcut,
-            "MagicBridge for Apple Magic Keyboard",
+            "MacKeys for Apple Magic Keyboard",
             "",
         );
 
-        let uninstall_shortcut = start_menu_folder.join("Uninstall MagicBridge.lnk");
+        let uninstall_shortcut = start_menu_folder.join("Uninstall MacKeys.lnk");
         let _ = create_shortcut(
             &dest_exe,
             &uninstall_shortcut,
-            "Uninstall MagicBridge",
+            "Uninstall MacKeys",
             "--uninstall",
         );
     }
@@ -185,11 +188,11 @@ pub fn perform_install(options: &InstallOptions) -> Result<(), String> {
     {
         let desktop_path = PathBuf::from(userprofile)
             .join("Desktop")
-            .join("MagicBridge.lnk");
+            .join("MacKeys.lnk");
         let _ = create_shortcut(
             &dest_exe,
             &desktop_path,
-            "MagicBridge for Apple Magic Keyboard",
+            "MacKeys for Apple Magic Keyboard",
             "",
         );
     }
@@ -199,27 +202,23 @@ pub fn perform_install(options: &InstallOptions) -> Result<(), String> {
         let dest_str = format!("\"{}\" --daemon", dest_exe.display());
         let _ = write_hkcu_string(
             r"Software\Microsoft\Windows\CurrentVersion\Run",
-            "MagicBridge",
+            "MacKeys",
             &dest_str,
         );
     }
 
     // Register in Windows Settings "Installed apps"
-    let uninstall_key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\MagicBridge";
+    let uninstall_key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys";
     let uninstall_str = format!("\"{}\" --uninstall", dest_exe.display());
     let icon_str = format!("\"{}\",0", dest_exe.display());
 
     let _ = write_hkcu_string(
         uninstall_key,
         "DisplayName",
-        "MagicBridge (Apple Magic Keyboard for Windows)",
+        "MacKeys (Apple Magic Keyboard for Windows)",
     );
     let _ = write_hkcu_string(uninstall_key, "DisplayVersion", env!("CARGO_PKG_VERSION"));
-    let _ = write_hkcu_string(
-        uninstall_key,
-        "Publisher",
-        "MagicBridge Open Source Project",
-    );
+    let _ = write_hkcu_string(uninstall_key, "Publisher", "MacKeys Open Source Project");
     let _ = write_hkcu_string(
         uninstall_key,
         "InstallLocation",
@@ -238,37 +237,46 @@ pub fn perform_install(options: &InstallOptions) -> Result<(), String> {
     Ok(())
 }
 
-/// Performs clean uninstallation of MagicBridge.
+/// Performs clean uninstallation of MacKeys.
 pub fn perform_uninstall(remove_user_data: bool) -> Result<(), String> {
     // 1. Terminate running instances
     let _ = Command::new("taskkill")
-        .args(["/F", "/IM", "magicbridge.exe"])
+        .args(["/F", "/IM", "mackeys.exe", "/IM", "magicbridge.exe"])
         .status();
 
     // 2. Remove autostart entry
+    let _ = delete_hkcu_value(r"Software\Microsoft\Windows\CurrentVersion\Run", "MacKeys");
     let _ = delete_hkcu_value(
         r"Software\Microsoft\Windows\CurrentVersion\Run",
         "MagicBridge",
     );
 
     // 3. Remove uninstall entry
+    let _ = delete_hkcu_key(r"Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys");
     let _ = delete_hkcu_key(r"Software\Microsoft\Windows\CurrentVersion\Uninstall\MagicBridge");
 
     // 4. Remove Start Menu folder and Desktop Shortcuts
     if let Ok(appdata) = std::env::var("APPDATA") {
-        let start_menu_folder = PathBuf::from(appdata.clone())
-            .join(r"Microsoft\Windows\Start Menu\Programs\MagicBridge");
+        let start_menu_folder =
+            PathBuf::from(appdata.clone()).join(r"Microsoft\Windows\Start Menu\Programs\MacKeys");
         let _ = std::fs::remove_dir_all(start_menu_folder);
+        let legacy_folder = PathBuf::from(appdata.clone())
+            .join(r"Microsoft\Windows\Start Menu\Programs\MagicBridge");
+        let _ = std::fs::remove_dir_all(legacy_folder);
         // Also remove legacy single shortcut if present
         let legacy_shortcut =
-            PathBuf::from(appdata).join(r"Microsoft\Windows\Start Menu\Programs\MagicBridge.lnk");
+            PathBuf::from(appdata).join(r"Microsoft\Windows\Start Menu\Programs\MacKeys.lnk");
         let _ = std::fs::remove_file(legacy_shortcut);
     }
     if let Ok(userprofile) = std::env::var("USERPROFILE") {
-        let desktop_path = PathBuf::from(userprofile)
+        let desktop_path = PathBuf::from(userprofile.clone())
+            .join("Desktop")
+            .join("MacKeys.lnk");
+        let _ = std::fs::remove_file(desktop_path);
+        let legacy_desktop = PathBuf::from(userprofile)
             .join("Desktop")
             .join("MagicBridge.lnk");
-        let _ = std::fs::remove_file(desktop_path);
+        let _ = std::fs::remove_file(legacy_desktop);
     }
 
     // 5. Remove user configuration if requested
@@ -404,7 +412,7 @@ pub enum SetupStep {
     Finished,
 }
 
-/// Action chosen on Step 0 if MagicBridge is already installed.
+/// Action chosen on Step 0 if MacKeys is already installed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum WelcomeAction {
     #[default]
@@ -437,7 +445,8 @@ pub struct InstallerApp {
 impl Default for InstallerApp {
     fn default() -> Self {
         let default_dir = default_install_dir();
-        let already_installed = default_dir.join("magicbridge.exe").exists();
+        let already_installed = default_dir.join("mackeys.exe").exists()
+            || default_dir.join("magicbridge.exe").exists();
         let detected_layout = crate::detect_windows_keyboard_layout();
 
         let mut app = Self {
@@ -507,10 +516,10 @@ impl InstallerApp {
             });
     }
     fn render_step_welcome(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        ui.heading("Welcome to the MagicBridge Setup Wizard");
+        ui.heading("Welcome to the MacKeys Setup Wizard");
         ui.add_space(4.0);
         ui.label(
-            "MagicBridge makes the Apple Magic Keyboard with Numeric Keypad (model A1843) \
+            "MacKeys makes the Apple Magic Keyboard with Numeric Keypad (model A1843) \
              behave as a first-class Windows keyboard with native media controls, user-mode \
              Fn layer, modifier presets, and live battery reporting.",
         );
@@ -524,7 +533,7 @@ impl InstallerApp {
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
                         ui.label(
-                            RichText::new("ℹ MagicBridge is currently installed on this computer.")
+                            RichText::new("ℹ MacKeys is currently installed on this computer.")
                                 .strong()
                                 .color(Color32::from_rgb(0, 100, 200)),
                         );
@@ -532,12 +541,12 @@ impl InstallerApp {
                         ui.radio_value(
                             &mut self.welcome_action,
                             WelcomeAction::InstallOrUpgrade,
-                            "Reinstall or Upgrade MagicBridge (Recommended)",
+                            "Reinstall or Upgrade MacKeys (Recommended)",
                         );
                         ui.radio_value(
                             &mut self.welcome_action,
                             WelcomeAction::Uninstall,
-                            "Uninstall MagicBridge completely from this computer",
+                            "Uninstall MacKeys completely from this computer",
                         );
                     });
                 });
@@ -546,7 +555,7 @@ impl InstallerApp {
                 .fill(Color32::from_rgb(245, 248, 250))
                 .corner_radius(CornerRadius::same(6))
                 .show(ui, |ui| {
-                    ui.label("This setup wizard will install MagicBridge onto your computer and guide you through first-run keyboard configuration.");
+                    ui.label("This setup wizard will install MacKeys onto your computer and guide you through first-run keyboard configuration.");
                 });
         }
 
@@ -585,7 +594,7 @@ impl InstallerApp {
 
     fn render_step_options(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.heading("Installation Options");
-        ui.label("Select the installation options for MagicBridge:");
+        ui.label("Select the installation options for MacKeys:");
         ui.add_space(8.0);
 
         // Basic Options (visible to all users)
@@ -595,7 +604,7 @@ impl InstallerApp {
             .show(ui, |ui| {
                 ui.vertical(|ui| {
                     ui.label(RichText::new("Installation Summary").strong());
-                    ui.label("• Installs to your personal user account (%LOCALAPPDATA%\\Programs\\MagicBridge)");
+                    ui.label("• Installs to your personal user account (%LOCALAPPDATA%\\Programs\\MacKeys)");
                     ui.label("• Zero administrator privileges required, leaves Windows system files untouched");
                     ui.add_space(6.0);
                     ui.checkbox(
@@ -604,7 +613,7 @@ impl InstallerApp {
                     );
                     ui.checkbox(
                         &mut self.options.autostart_on_login,
-                        "Start MagicBridge automatically at Windows login",
+                        "Start MacKeys automatically at Windows login",
                     );
                 });
             });
@@ -631,7 +640,7 @@ impl InstallerApp {
                 });
                 ui.checkbox(
                     &mut self.options.create_start_menu_shortcut,
-                    "Create Start Menu shortcuts (MagicBridge & Uninstaller)",
+                    "Create Start Menu shortcuts (MacKeys & Uninstaller)",
                 );
             });
         }
@@ -663,8 +672,8 @@ impl InstallerApp {
     }
 
     fn render_step_installing(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
-        ui.heading("Installing MagicBridge...");
-        ui.label("Please wait while the setup wizard installs MagicBridge on your computer.");
+        ui.heading("Installing MacKeys...");
+        ui.label("Please wait while the setup wizard installs MacKeys on your computer.");
         ui.add_space(16.0);
 
         if self.install_progress < 1.0 {
@@ -984,7 +993,7 @@ impl InstallerApp {
     fn render_step_finished(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.heading("🎉 Setup Completed Successfully!");
         ui.add_space(4.0);
-        ui.label("MagicBridge is now installed and configured on your computer.");
+        ui.label("MacKeys is now installed and configured on your computer.");
         ui.label("The background keyboard engine is active and will run in your system tray.");
         ui.add_space(16.0);
 
@@ -1003,7 +1012,7 @@ impl InstallerApp {
 
         ui.horizontal(|ui| {
             let open_settings_btn = egui::Button::new(
-                RichText::new("🚀 Open MagicBridge Settings Panel")
+                RichText::new("🚀 Open MacKeys Settings Panel")
                     .size(15.0)
                     .strong()
                     .color(Color32::WHITE),
@@ -1012,8 +1021,13 @@ impl InstallerApp {
             .corner_radius(CornerRadius::same(6));
 
             if ui.add(open_settings_btn).clicked() {
-                let dest_exe = self.options.install_dir.join("magicbridge.exe");
-                let mut cmd = Command::new(&dest_exe);
+                let dest_exe = self.options.install_dir.join("mackeys.exe");
+                let exe_to_run = if dest_exe.exists() {
+                    dest_exe
+                } else {
+                    self.options.install_dir.join("magicbridge.exe")
+                };
+                let mut cmd = Command::new(&exe_to_run);
                 cmd.arg("--settings");
                 let _ = cmd.spawn();
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -1042,13 +1056,13 @@ impl App for UninstallerApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.add_space(8.0);
-            ui.heading("🗑 MagicBridge Uninstaller");
+            ui.heading("🗑 MacKeys Uninstaller");
             ui.add_space(8.0);
 
             if self.is_finished {
                 ui.colored_label(
                     Color32::from_rgb(40, 160, 60),
-                    RichText::new("✔ MagicBridge was successfully and cleanly removed.").size(16.0).strong(),
+                    RichText::new("✔ MacKeys was successfully and cleanly removed.").size(16.0).strong(),
                 );
                 ui.add_space(10.0);
                 ui.label("All application files, shortcuts, and background entries have been purged.");
@@ -1059,9 +1073,9 @@ impl App for UninstallerApp {
                 return;
             }
 
-            ui.label("Are you sure you want to completely remove MagicBridge and all its shortcuts from your computer?");
+            ui.label("Are you sure you want to completely remove MacKeys and all its shortcuts from your computer?");
             ui.add_space(8.0);
-            ui.checkbox(&mut self.remove_user_data, "Also remove custom key profiles and user configuration files (%APPDATA%\\MagicBridge)");
+            ui.checkbox(&mut self.remove_user_data, "Also remove custom key profiles and user configuration files (%APPDATA%\\MacKeys)");
 
             if let Some(ref res) = self.status_message {
                 ui.add_space(8.0);
@@ -1078,7 +1092,7 @@ impl App for UninstallerApp {
             ui.add_space(20.0);
             ui.horizontal(|ui| {
                 let uninstall_btn = egui::Button::new(
-                    RichText::new("Uninstall MagicBridge")
+                    RichText::new("Uninstall MacKeys")
                         .size(14.0)
                         .strong()
                         .color(Color32::WHITE),
@@ -1142,11 +1156,11 @@ pub fn run_installer_gui() -> Result<(), eframe::Error> {
         viewport: ViewportBuilder::default()
             .with_inner_size([640.0, 450.0])
             .with_min_inner_size([600.0, 420.0])
-            .with_title("MagicBridge Setup Wizard"),
+            .with_title("MacKeys Setup Wizard"),
         ..Default::default()
     };
     eframe::run_native(
-        "MagicBridge Setup Wizard",
+        "MacKeys Setup Wizard",
         native_options,
         Box::new(|cc| {
             crate::setup_custom_fonts(&cc.egui_ctx);
@@ -1161,11 +1175,11 @@ pub fn run_uninstaller_gui() -> Result<(), eframe::Error> {
         viewport: ViewportBuilder::default()
             .with_inner_size([540.0, 320.0])
             .with_resizable(false)
-            .with_title("MagicBridge Uninstaller"),
+            .with_title("MacKeys Uninstaller"),
         ..Default::default()
     };
     eframe::run_native(
-        "MagicBridge Uninstaller",
+        "MacKeys Uninstaller",
         native_options,
         Box::new(|cc| {
             crate::setup_custom_fonts(&cc.egui_ctx);

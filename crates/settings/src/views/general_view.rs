@@ -513,8 +513,7 @@ pub fn show(
                     ui.horizontal(|ui| {
                         // Export Config
                         if ui.button(i18n.t("general.export_config")).clicked() {
-                            let default_export_path =
-                                PathBuf::from("MagicBridge_Config_Export.toml");
+                            let default_export_path = PathBuf::from("MacKeys_Config_Export.toml");
                             if let Ok(toml_str) = config.to_toml_string()
                                 && let Ok(()) = fs::write(&default_export_path, toml_str)
                             {
@@ -527,8 +526,7 @@ pub fn show(
 
                         // Import Config
                         if ui.button(i18n.t("general.import_config")).clicked() {
-                            let default_import_path =
-                                PathBuf::from("MagicBridge_Config_Export.toml");
+                            let default_import_path = PathBuf::from("MacKeys_Config_Export.toml");
                             if default_import_path.is_file()
                                 && let Ok(contents) = fs::read_to_string(&default_import_path)
                                 && let Ok(imported_config) = Config::from_toml_str(&contents)

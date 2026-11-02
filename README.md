@@ -1,10 +1,10 @@
 <div align="center">
 
-# MagicBridge ⌨️ 🌉
+# MacKeys ⌨️ 🌉
 
 **A tiny, invisible, native Windows 10/11 utility that makes Apple Keyboards (Full-Size & Compact) feel right at home on Windows.**
 
-[![Latest Release](https://img.shields.io/github/v/release/DooperDrew/magicbridge?logo=github&label=release%20v0.4.1)](https://github.com/DooperDrew/magicbridge/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/DooperDrew/mackeys-win?logo=github&label=release%20v0.4.1)](https://github.com/DooperDrew/mackeys-win/releases/latest)
 [![Rust Stable](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: Windows 10/11 x64](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-informational.svg)](https://microsoft.com/windows)
@@ -22,7 +22,7 @@
 
 ## Supported Apple Keyboards
 
-MagicBridge natively supports the full desktop Apple keyboard family:
+MacKeys natively supports the full desktop Apple keyboard family:
 - **Full-Size with Numeric Keypad (109 Keys):** Magic Keyboard with Numeric Keypad (`A1843`, `A2520`, `A3123`) & Apple Keyboard Wired (`A1243`).
 - **Compact Tenkeyless (78/79 Keys):** Magic Keyboard Compact (`A1644`, `A2449`, `A2450`, `A3122`) & Apple Wireless Keyboard (`A1314`).
 - **Live Hardware Auto-Detection:** Automatically identifies connected models via USB/Bluetooth Product ID (PID) and adapts the visual keyboard geometry.
@@ -39,13 +39,13 @@ Apple Keyboards are gorgeous pieces of hardware, but when paired with Windows 10
 - **No battery indicator:** Windows does not surface battery percentage on the taskbar or tray.
 - **Heavy or invasive workarounds:** Existing third-party solutions often require paid licenses, obsolete Apple Boot Camp drivers, kernel-mode filters (which trigger game anti-cheat bans), or bulky Electron apps.
 
-**MagicBridge solves this with zero kernel drivers, zero DLL injection, and zero background idle CPU.**
+**MacKeys solves this with zero kernel drivers, zero DLL injection, and zero background idle CPU.**
 
 ---
 
-## ⚡ How MagicBridge Compares to Alternatives
+## ⚡ How MacKeys Compares to Alternatives
 
-| Feature / Invariant | **MagicBridge** | *Magic Utilities* | *Apple Boot Camp Drivers* | *WinAppleKey* | *AutoHotkey Scripts (AHK)* |
+| Feature / Invariant | **MacKeys** | *Magic Utilities* | *Apple Boot Camp Drivers* | *WinAppleKey* | *AutoHotkey Scripts (AHK)* |
 |---|:---:|:---:|:---:|:---:|:---:|
 | **Architecture** | **Driverless (User Mode)** | Kernel Driver (`.sys`) | Kernel Driver (`.sys`) | Kernel LowerFilter | Script Interpreter |
 | **Game Anti-Cheat Safe** | **✅ 100% Safe** | ⚠️ Risk (Kernel hook) | ⚠️ Risk (Kernel driver) | ⚠️ Risk (Test-signed) | ⚠️ Flagged by some anticheats |
@@ -89,12 +89,12 @@ Apple Keyboards are gorgeous pieces of hardware, but when paired with Windows 10
 
 ## 📥 Download & Installation
 
-MagicBridge requires **no administrator privileges**, installs in seconds, and provides multiple distribution channels:
+MacKeys requires **no administrator privileges**, installs in seconds, and provides multiple distribution channels:
 
 ### Option 1: Standalone Setup Installer (Recommended)
-1. Download **[`MagicBridge-Setup.exe`](https://github.com/DooperDrew/magicbridge/releases/latest)** from GitHub Releases.
+1. Download **[`MacKeys-Setup.exe`](https://github.com/DooperDrew/mackeys-win/releases/latest)** from GitHub Releases.
 2. Run the single-file setup wizard. The 5-step installer lets you:
-   - Select your installation directory (defaults to `%LOCALAPPDATA%\Programs\MagicBridge`).
+   - Select your installation directory (defaults to `%LOCALAPPDATA%\Programs\MacKeys`).
    - Create Start Menu and Desktop shortcuts.
    - Configure automatic launch on Windows sign-in.
    - Automatically probes connected Apple hardware and pre-configures your layout.
@@ -102,32 +102,32 @@ MagicBridge requires **no administrator privileges**, installs in seconds, and p
 
 *For headless / silent installations:*
 ```powershell
-.\MagicBridge-Setup.exe --silent
+.\MacKeys-Setup.exe --silent
 ```
 
 ### Option 2: Portable ZIP (Zero Installation)
 If you prefer not to install anything:
-1. Download **`MagicBridge-v0.4.1-portable.zip`** from [GitHub Releases](https://github.com/DooperDrew/magicbridge/releases/latest).
-2. Extract and run **`magicbridge.exe`**.
+1. Download **`MacKeys-v0.4.1-portable.zip`** from [GitHub Releases](https://github.com/DooperDrew/mackeys-win/releases/latest).
+2. Extract and run **`mackeys.exe`**.
 3. Settings and daemon start immediately. Zero registry keys touched; perfect for running from a USB drive.
 
 ### Option 3: Microsoft WinGet
 Install directly via the official Windows Package Manager:
 ```powershell
-winget install DooperDrew.MagicBridge
+winget install DooperDrew.MacKeys
 ```
 
 ### Option 4: Scoop Package Manager
 Install via Scoop:
 ```powershell
-scoop install https://raw.githubusercontent.com/DooperDrew/magicbridge/main/packaging/scoop/magicbridge.json
+scoop install https://raw.githubusercontent.com/DooperDrew/mackeys-win/main/packaging/scoop/mackeys.json
 ```
 
 ---
 
 ## Architecture Overview
 
-MagicBridge is engineered as a clean Rust Cargo workspace separating pure business logic from operating system hooks and UI:
+MacKeys is engineered as a clean Rust Cargo workspace separating pure business logic from operating system hooks and UI:
 
 ```mermaid
 flowchart LR
@@ -216,18 +216,18 @@ Compiled binaries will be located in `target/release/` (`magicbridge-agent.exe` 
 
 Progress is tracked via GitHub Milestones and Issues:
 
-- [x] **[M0: Hardware Spike 🔬](https://github.com/DooperDrew/magicbridge/issues/1)** — Verified USB/BT descriptors, battery report `0x90`, timing benchmarks, and the `AltGr` scancode `0x21D` quirk. See [docs/hardware-findings.md](docs/hardware-findings.md).
-- [x] **[M1: Agent Skeleton](https://github.com/DooperDrew/magicbridge/issues/2)** — Single-instance tray app, config schema, autostart, and device lifecycle handling.
-- [x] **[M2: Remapping Engine](https://github.com/DooperDrew/magicbridge/issues/3)** — Zero-allocation `WH_KEYBOARD_LL` hook, atomic table swapping, modifier presets, and self-injection prevention.
-- [x] **[M3: Fn Layer & Top Row](https://github.com/DooperDrew/magicbridge/issues/4)** — Configurable Fn trigger key, Fn combos, and Media vs. F-keys toggle.
-- [x] **[M4: Custom Actions & Battery](https://github.com/DooperDrew/magicbridge/issues/5)** — Off-thread macro execution and background battery monitoring.
-- [x] **[M5: Settings GUI](https://github.com/DooperDrew/magicbridge/issues/8)** — Visual A1843 layout editor, multi-language presets, and profile manager.
-- [x] **[M6: Hardening & Performance](https://github.com/DooperDrew/magicbridge/issues/6)** — Soak testing, sleep/resume validation, and strict latency measurement.
-- [x] **[M7: Packaging & Release](https://github.com/DooperDrew/magicbridge/issues/7)** — Standalone portable zip and installer.
-- [x] **[M8: Multi-Agent Methodology & Architecture](https://github.com/DooperDrew/magicbridge/issues/9)** — Didactic multi-agent parallelization documentation, Settings architecture tab, and GitHub Release v0.1.0 parity. See [docs/multi-agent-methodology.md](docs/multi-agent-methodology.md).
+- [x] **[M0: Hardware Spike 🔬](https://github.com/DooperDrew/mackeys-win/issues/1)** — Verified USB/BT descriptors, battery report `0x90`, timing benchmarks, and the `AltGr` scancode `0x21D` quirk. See [docs/hardware-findings.md](docs/hardware-findings.md).
+- [x] **[M1: Agent Skeleton](https://github.com/DooperDrew/mackeys-win/issues/2)** — Single-instance tray app, config schema, autostart, and device lifecycle handling.
+- [x] **[M2: Remapping Engine](https://github.com/DooperDrew/mackeys-win/issues/3)** — Zero-allocation `WH_KEYBOARD_LL` hook, atomic table swapping, modifier presets, and self-injection prevention.
+- [x] **[M3: Fn Layer & Top Row](https://github.com/DooperDrew/mackeys-win/issues/4)** — Configurable Fn trigger key, Fn combos, and Media vs. F-keys toggle.
+- [x] **[M4: Custom Actions & Battery](https://github.com/DooperDrew/mackeys-win/issues/5)** — Off-thread macro execution and background battery monitoring.
+- [x] **[M5: Settings GUI](https://github.com/DooperDrew/mackeys-win/issues/8)** — Visual A1843 layout editor, multi-language presets, and profile manager.
+- [x] **[M6: Hardening & Performance](https://github.com/DooperDrew/mackeys-win/issues/6)** — Soak testing, sleep/resume validation, and strict latency measurement.
+- [x] **[M7: Packaging & Release](https://github.com/DooperDrew/mackeys-win/issues/7)** — Standalone portable zip and installer.
+- [x] **[M8: Multi-Agent Methodology & Architecture](https://github.com/DooperDrew/mackeys-win/issues/9)** — Didactic multi-agent parallelization documentation, Settings architecture tab, and GitHub Release v0.1.0 parity. See [docs/multi-agent-methodology.md](docs/multi-agent-methodology.md).
 - [ ] **M9: Quality Assurance & Empirical Validation** — Physical A1843 hardware matrix execution, sleep/resume, game mode auto-pause, and security verification. See [docs/06-qa-and-validation.md](docs/06-qa-and-validation.md).
 - [ ] **M10: User Experience & Onboarding Improvements** — Guided installer wizard, first-run onboarding configuration wizard, responsive Settings layout, and live battery tray indicator. See [docs/07-ux-and-improvements.md](docs/07-ux-and-improvements.md).
-- [x] **[M11: GitHub Copilot Agent Integration](https://github.com/DooperDrew/magicbridge/issues/16)** — Cloud multi-agent collaborative workflows, permanent repo instructions (`.github/copilot-instructions.md`), and automated agent task issue templates. See [docs/multi-agent-methodology.md](docs/multi-agent-methodology.md).
+- [x] **[M11: GitHub Copilot Agent Integration](https://github.com/DooperDrew/mackeys-win/issues/16)** — Cloud multi-agent collaborative workflows, permanent repo instructions (`.github/copilot-instructions.md`), and automated agent task issue templates. See [docs/multi-agent-methodology.md](docs/multi-agent-methodology.md).
 
 ---
 
@@ -235,17 +235,17 @@ Progress is tracked via GitHub Milestones and Issues:
 
 <details>
 <summary><b>Why doesn't the physical Fn key work on Windows out-of-the-box?</b></summary>
-Windows' inbox kernel driver (<code>kbdhid.sys</code>) intercepts the physical Fn key and treats it as an internal hardware modifier; it is never forwarded to user-mode software. MagicBridge solves this elegantly without risky kernel drivers by providing a user-configurable Fn trigger key (Right Option / AltGr by default, or Right Control, or F19), giving you full access to Home, End, PageUp, PageDown, Forward Delete, and media controls.
+Windows' inbox kernel driver (<code>kbdhid.sys</code>) intercepts the physical Fn key and treats it as an internal hardware modifier; it is never forwarded to user-mode software. MacKeys solves this elegantly without risky kernel drivers by providing a user-configurable Fn trigger key (Right Option / AltGr by default, or Right Control, or F19), giving you full access to Home, End, PageUp, PageDown, Forward Delete, and media controls.
 </details>
 
 <details>
-<summary><b>Is MagicBridge safe with anti-cheat software in online multiplayer games?</b></summary>
-Yes, 100%. Unlike Boot Camp driver hacks or commercial utilities that install unsigned or third-party kernel filter drivers (<code>.sys</code>) that can trigger anti-cheat bans (Vanguard, Easy Anti-Cheat, BattlEye), MagicBridge operates purely in standard Windows user mode. Furthermore, Game Mode automatically pauses all remappings whenever a fullscreen DirectX or Vulkan game is launched.
+<summary><b>Is MacKeys safe with anti-cheat software in online multiplayer games?</b></summary>
+Yes, 100%. Unlike Boot Camp driver hacks or commercial utilities that install unsigned or third-party kernel filter drivers (<code>.sys</code>) that can trigger anti-cheat bans (Vanguard, Easy Anti-Cheat, BattlEye), MacKeys operates purely in standard Windows user mode. Furthermore, Game Mode automatically pauses all remappings whenever a fullscreen DirectX or Vulkan game is launched.
 </details>
 
 <details>
-<summary><b>How does MagicBridge read the battery level without Apple drivers?</b></summary>
-MagicBridge reads battery telemetry directly from the Apple Vendor HID Collection (Usage Page <code>0xFF00</code>, Usage <code>0x0014</code>, Report ID <code>0x90</code>). Both USB Lightning connection and Bluetooth Classic report exact real-time percentages and charging state.
+<summary><b>How does MacKeys read the battery level without Apple drivers?</b></summary>
+MacKeys reads battery telemetry directly from the Apple Vendor HID Collection (Usage Page <code>0xFF00</code>, Usage <code>0x0014</code>, Report ID <code>0x90</code>). Both USB Lightning connection and Bluetooth Classic report exact real-time percentages and charging state.
 </details>
 
 <details>
@@ -255,7 +255,7 @@ Yes. In the Settings UI or System Tray, choose the <b>Windows Layout</b> preset.
 
 <details>
 <summary><b>Which Apple keyboard models are supported?</b></summary>
-MagicBridge supports the entire desktop family:
+MacKeys supports the entire desktop family:
 <ul>
   <li><b>A1843</b>: Magic Keyboard with Numeric Keypad (Lightning/Bluetooth)</li>
   <li><b>A2520 / A3123</b>: Magic Keyboard with Touch ID and Numeric Keypad</li>
@@ -272,7 +272,7 @@ MagicBridge supports the entire desktop family:
 
 We welcome community feedback, bug reports, and pull requests! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for code conventions, safety requirements, and testing guidelines.
 
-MagicBridge is built using an **AI-Agent native architecture**. GitHub Copilot and autonomous coding agents follow strict performance and safety guardrails documented in [`.github/copilot-instructions.md`](.github/copilot-instructions.md). New features and bounded tasks can be directly prepared for agents using the [🤖 Agent Task Issue Template](.github/ISSUE_TEMPLATE/agent_task.md).
+MacKeys is built using an **AI-Agent native architecture**. GitHub Copilot and autonomous coding agents follow strict performance and safety guardrails documented in [`.github/copilot-instructions.md`](.github/copilot-instructions.md). New features and bounded tasks can be directly prepared for agents using the [🤖 Agent Task Issue Template](.github/ISSUE_TEMPLATE/agent_task.md).
 
 ## License
 

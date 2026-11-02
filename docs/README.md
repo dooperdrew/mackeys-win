@@ -1,6 +1,6 @@
-# MagicBridge Documentation System
+# MacKeys Documentation System
 
-This directory contains the canonical specifications, hardware findings, architectural blueprints, and living governance logs for **MagicBridge**.
+This directory contains the canonical specifications, hardware findings, architectural blueprints, and living governance logs for **MacKeys**.
 
 In an agent-assisted and autonomous engineering environment, **the codebase specifications are the primary interface between human intent and AI execution**. Keeping technical truth in version-controlled markdown files prevents context drift, hallucinated constraints, architectural fragmentation, and abandoned conventions.
 
@@ -12,7 +12,7 @@ Whenever an agent or human developer enters the repository, documents must be co
 
 ```mermaid
 flowchart TD
-    D1["01-vision.md<br/><b>Vision & Non-Goals</b><br/><i>Why does MagicBridge exist?</i>"]
+    D1["01-vision.md<br/><b>Vision & Non-Goals</b><br/><i>Why does MacKeys exist?</i>"]
     D2["02-requirements.md<br/><b>Requirements & Budgets</b><br/><i>What are the latency, CPU, and functional rules?</i>"]
     D3["03-architecture.md<br/><b>Architecture & Boundaries</b><br/><i>Two-process model & crate boundaries</i>"]
     D4["hardware-findings.md<br/><b>Hardware Ground Truth</b><br/><i>Apple A1843 USB/BT VIDs, Fn quirks & report 0x90</i>"]

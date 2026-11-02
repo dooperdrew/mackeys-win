@@ -139,11 +139,11 @@ impl DaemonState {
     pub fn format_tooltip(&self) -> String {
         let mut parts = Vec::with_capacity(5);
         if !self.enabled {
-            parts.push("MagicBridge (Paused)".to_string());
+            parts.push("MacKeys (Paused)".to_string());
         } else if self.game_mode_active {
-            parts.push("MagicBridge (Game Mode Paused)".to_string());
+            parts.push("MacKeys (Game Mode Paused)".to_string());
         } else {
-            parts.push("MagicBridge".to_string());
+            parts.push("MacKeys".to_string());
         }
 
         if self.is_connected {
@@ -262,17 +262,14 @@ mod tests {
 
         // Disconnected, enabled
         let tip1 = state.format_tooltip();
-        assert_eq!(
-            tip1,
-            "MagicBridge — Profile: Default (IT) — Media keys first"
-        );
+        assert_eq!(tip1, "MacKeys — Profile: Default (IT) — Media keys first");
 
         // Disconnected, paused
         state.enabled = false;
         let tip2 = state.format_tooltip();
         assert_eq!(
             tip2,
-            "MagicBridge (Paused) — Profile: Default (IT) — Media keys first"
+            "MacKeys (Paused) — Profile: Default (IT) — Media keys first"
         );
 
         // Connected Bluetooth with battery 78%
@@ -283,7 +280,7 @@ mod tests {
         let tip3 = state.format_tooltip();
         assert_eq!(
             tip3,
-            "MagicBridge — Bluetooth — Battery 78% — Profile: Default (IT) — Media keys first"
+            "MacKeys — Bluetooth — Battery 78% — Profile: Default (IT) — Media keys first"
         );
     }
 
@@ -390,13 +387,13 @@ mod tests {
         state.is_connected = true;
 
         assert!(!state.game_mode_active);
-        assert!(state.format_tooltip().starts_with("MagicBridge —"));
+        assert!(state.format_tooltip().starts_with("MacKeys —"));
 
         state.game_mode_active = true;
         assert!(
             state
                 .format_tooltip()
-                .starts_with("MagicBridge (Game Mode Paused) —")
+                .starts_with("MacKeys (Game Mode Paused) —")
         );
 
         let status = state.status();

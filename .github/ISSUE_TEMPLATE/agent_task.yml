@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this template when preparing a bounded, self-contained implementation task for **GitHub Copilot Agent** or autonomous worker subagents. Tasks created with this template enforce the **Sole Committer Protocol** and MagicBridge performance budgets.
+        Use this template when preparing a bounded, self-contained implementation task for **GitHub Copilot Agent** or autonomous worker subagents. Tasks created with this template enforce the **Sole Committer Protocol** and MacKeys performance budgets.
   - type: input
     id: objective
     attributes:

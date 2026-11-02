@@ -53,7 +53,7 @@ pub fn run(opts: &Options) -> windows::core::Result<()> {
     let class = WNDCLASSW {
         lpfnWndProc: Some(wndproc),
         hInstance: hinstance,
-        lpszClassName: w!("MagicBridgeHidProbe"),
+        lpszClassName: w!("MacKeysHidProbe"),
         ..Default::default()
     };
     // SAFETY: `class` is fully initialised and its strings are static.
@@ -64,7 +64,7 @@ pub fn run(opts: &Options) -> windows::core::Result<()> {
     let hwnd = unsafe {
         CreateWindowExW(
             WINDOW_EX_STYLE(0),
-            w!("MagicBridgeHidProbe"),
+            w!("MacKeysHidProbe"),
             w!(""),
             WINDOW_STYLE(0),
             0,

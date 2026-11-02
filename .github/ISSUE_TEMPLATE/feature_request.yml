@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest an idea, new mapping preset, or improvement for MagicBridge
+description: Suggest an idea, new mapping preset, or improvement for MacKeys
 labels: ["enhancement"]
 body:
   - type: markdown

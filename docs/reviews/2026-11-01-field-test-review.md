@@ -1,8 +1,8 @@
 # Field-Test Review — 2026-11-01
 
 > Source evidence: owner screenshots (Setup Wizard step 4, Settings › Keyboard tab), owner hardware QA export
-> `qa-hardware-report-20261101-165016.txt` (A1843, 250 s, 103/109), live `%APPDATA%\MagicBridge\config.toml`,
-> running daemon (`magicbridge.exe --daemon`, PID 79640), source audit at commit `dccdf84`.
+> `qa-hardware-report-20261101-165016.txt` (A1843, 250 s, 103/109), live `%APPDATA%\MacKeys\config.toml`,
+> running daemon (`mackeys.exe --daemon`, PID 79640), source audit at commit `dccdf84`.
 >
 > Legend: ✅ verified from evidence · 🔬 suspected, needs a probe/owner confirmation before fixing.
 > Severity: **S1** broken/misleading core behaviour · **S2** significant UX/integrity defect · **S3** polish / docs.
@@ -52,7 +52,7 @@ The QA tab identifies keys from **egui key/text events + `GetAsyncKeyState` poll
 | ID | Sev | Finding |
 |---|---|---|
 | D1 | S2 🔬 | Daemon working set **15.1 MB** idle vs NFR-P1 ≤ 10 MB (target ≤ 5 MB). Single sample; the unified exe now links egui/wgpu into the daemon process. |
-| D2 | S3 ✅ | Unified `magicbridge.exe` is 3.8 MB vs NFR-P4 "agent binary ≤ 3 MB" — requirement predates the single-binary decision and must be restated. |
+| D2 | S3 ✅ | Unified `mackeys.exe` is 3.8 MB vs NFR-P4 "agent binary ≤ 3 MB" — requirement predates the single-binary decision and must be restated. |
 
 ## E. Docs, versioning & governance
 
@@ -60,7 +60,7 @@ The QA tab identifies keys from **egui key/text events + `GetAsyncKeyState` poll
 |---|---|---|
 | E1 | S1 ✅ | **Versioning not respected**: M14–M18 shipped under `0.4.0`; no tag/release after v0.4.0; installed binary (00:19) predates the final M15–M18 commit (00:25). |
 | E2 | S2 ✅ | **Roadmap/CHANGELOG over-claims**: M15.2 "native Windows 10/11 Toast" is a `Shell_NotifyIcon` balloon; "20 % warning" vs default threshold 15 %; M17.3 "automated WinGet submission" — `release.yml` has no WinGet step; M18.3 "integration" not done (A3). Milestones M15–M18 were closed on GitHub. |
-| E3 | S2 ✅ | README stale: install steps reference `MagicBridge-v0.2.1-windows-x64.zip` and the `0.2.1` WinGet manifest path; actual asset is `MagicBridge-v0.4.0-portable.zip`; no mention of OSD, Fn+Esc, per-app profiles, Magic Mouse. |
+| E3 | S2 ✅ | README stale: install steps reference `MacKeys-v0.2.1-windows-x64.zip` and the `0.2.1` WinGet manifest path; actual asset is `MacKeys-v0.4.0-portable.zip`; no mention of OSD, Fn+Esc, per-app profiles, Magic Mouse. |
 | E4 | S3 ✅ | `scripts/verify-gate.ps1` gained npm steps (commits `67d021e`, `dccdf84`) in a Rust-only repo — harmless (guarded by `package.json` absence) but noise. |
 | E5 | S3 ✅ | `06-qa-and-validation.md` has no rows for M15–M18 features (OSD, Fn+Esc, per-app switching, battery toasts). |
 

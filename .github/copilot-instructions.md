@@ -1,6 +1,6 @@
-# Operating Rules & Instructions for GitHub Copilot (MagicBridge)
+# Operating Rules & Instructions for GitHub Copilot (MacKeys)
 
-> **Repository:** `https://github.com/DooperDrew/magicbridge`  
+> **Repository:** `https://github.com/DooperDrew/mackeys-win`  
 > **Role of GitHub Copilot:** Worker Subagent / Fast Draft Implementer  
 > **Lead Orchestrator & Sole Committer:** Antigravity (Local Lead Agent)
 
@@ -10,7 +10,7 @@ Whenever working on this repository — whether via Copilot Agent, Copilot in VS
 
 ## 1. Division of Labor & Sole Committer Protocol
 
-MagicBridge enforces a strict **Hub-and-Spoke (Lead Orchestrator & Worker)** multi-agent model:
+MacKeys enforces a strict **Hub-and-Spoke (Lead Orchestrator & Worker)** multi-agent model:
 
 ```
 [ User ]  ──► [ Lead Agent (Antigravity) ]
@@ -46,7 +46,7 @@ MagicBridge enforces a strict **Hub-and-Spoke (Lead Orchestrator & Worker)** mul
    - 100% unit-tested.
 2. **`crates/agent` (`magicbridge-agent`):**
    - Native Windows background daemon.
-   - Low-level keyboard hook (`WH_KEYBOARD_LL`), Win32 message pump, named pipe IPC server (`\\.\pipe\MagicBridge_Agent_IPC`), system tray icon, and raw HID battery telemetry.
+   - Low-level keyboard hook (`WH_KEYBOARD_LL`), Win32 message pump, named pipe IPC server (`\\.\pipe\MacKeys_Agent_IPC`), system tray icon, and raw HID battery telemetry.
 3. **`crates/settings` (`magicbridge-settings`):**
    - Standalone configuration GUI built with `eframe` / `egui`.
    - Only resident in memory while open. Connects to `magicbridge-agent` via IPC.
@@ -91,7 +91,7 @@ Inside the `WH_KEYBOARD_LL` low-level input hook callback (`crates/agent/src/hoo
 
 ## 4. Hardware Ground Truth & Known Quirks
 
-MagicBridge is specifically calibrated for the **Apple Magic Keyboard with Numeric Keypad (Model A1843)**. Consult `docs/hardware-findings.md` before making any hardware assumptions:
+MacKeys is specifically calibrated for the **Apple Magic Keyboard with Numeric Keypad (Model A1843)**. Consult `docs/hardware-findings.md` before making any hardware assumptions:
 
 1. **Vendor IDs:**
    - Lightning-to-USB Cable: `VID = 0x05AC`
@@ -99,7 +99,7 @@ MagicBridge is specifically calibrated for the **Apple Magic Keyboard with Numer
    - Always check both vendor IDs via `magicbridge_core::is_apple_vendor`.
 2. **Fn Key / Eject Kernel Stripping:**
    - Windows kernel driver `kbdhid.sys` completely strips physical Fn and Eject events before they reach user mode.
-   - Do NOT attempt to read physical Fn from raw input. MagicBridge uses user-configurable trigger keys (default: Right Option / `VK_RMENU`).
+   - Do NOT attempt to read physical Fn from raw input. MacKeys uses user-configurable trigger keys (default: Right Option / `VK_RMENU`).
 3. **Italian / ISO AltGr Quirk (`sc=0x21D`):**
    - Pressing physical Right Option on ISO Italian keyboard layouts causes Windows to automatically synthesize an artificial `VK_LCONTROL` keydown with `scanCode == 0x21D` ~0.8 ms before `VK_RMENU`.
    - The hook engine must swallow `0x21D` whenever Right Option is remapped or used as the Fn trigger.

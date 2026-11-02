@@ -22,8 +22,10 @@ use windows::Win32::System::Registry::RegDeleteKeyW;
 /// Default registry subkey for per-user autostart entries.
 pub const RUN_KEY_PATH: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
 
-/// Default registry value name for MagicBridge.
-pub const APP_VALUE_NAME: &str = "MagicBridge";
+/// Default registry value name for MacKeys.
+pub const APP_VALUE_NAME: &str = "MacKeys";
+/// Legacy registry value name for seamless migration.
+pub const LEGACY_APP_VALUE_NAME: &str = "MagicBridge";
 
 /// Errors that can occur during autostart configuration operations.
 #[derive(Debug)]
@@ -356,21 +358,30 @@ pub fn disable_autostart_at(
 // Public API operating on HKCU\Software\Microsoft\Windows\CurrentVersion\Run
 // ---------------------------------------------------------------------------
 
-/// Checks if autostart is currently enabled for MagicBridge in `HKEY_CURRENT_USER\...\Run`.
+/// Checks if autostart is currently enabled for MacKeys in `HKEY_CURRENT_USER\...\Run`.
 pub fn is_autostart_enabled() -> Result<bool, AutostartError> {
-    is_autostart_enabled_at(HKEY_CURRENT_USER, RUN_KEY_PATH, APP_VALUE_NAME)
+    if is_autostart_enabled_at(HKEY_CURRENT_USER, RUN_KEY_PATH, APP_VALUE_NAME)? {
+        Ok(true)
+    } else {
+        is_autostart_enabled_at(HKEY_CURRENT_USER, RUN_KEY_PATH, LEGACY_APP_VALUE_NAME)
+    }
 }
 
-/// Retrieves the command string currently stored for MagicBridge in `HKEY_CURRENT_USER\...\Run`,
+/// Retrieves the command string currently stored for MacKeys in `HKEY_CURRENT_USER\...\Run`,
 /// or `Ok(None)` if not registered.
 pub fn get_autostart_command() -> Result<Option<String>, AutostartError> {
-    get_autostart_command_at(HKEY_CURRENT_USER, RUN_KEY_PATH, APP_VALUE_NAME)
+    if let Some(cmd) = get_autostart_command_at(HKEY_CURRENT_USER, RUN_KEY_PATH, APP_VALUE_NAME)? {
+        Ok(Some(cmd))
+    } else {
+        get_autostart_command_at(HKEY_CURRENT_USER, RUN_KEY_PATH, LEGACY_APP_VALUE_NAME)
+    }
 }
 
-/// Registers the given executable path in `HKEY_CURRENT_USER\...\Run` under `"MagicBridge"`.
+/// Registers the given executable path in `HKEY_CURRENT_USER\...\Run` under `"MacKeys"`.
 ///
 /// The path is quoted automatically if not already quoted.
 pub fn enable_autostart(exe_path: &Path) -> Result<(), AutostartError> {
+    let _ = disable_autostart_at(HKEY_CURRENT_USER, RUN_KEY_PATH, LEGACY_APP_VALUE_NAME);
     enable_autostart_at(HKEY_CURRENT_USER, RUN_KEY_PATH, APP_VALUE_NAME, exe_path)
 }
 
@@ -380,10 +391,11 @@ pub fn enable_current_exe_autostart() -> Result<(), AutostartError> {
     enable_autostart(&current_exe)
 }
 
-/// Unregisters MagicBridge from `HKEY_CURRENT_USER\...\Run`.
+/// Unregisters MacKeys from `HKEY_CURRENT_USER\...\Run`.
 ///
 /// If the value is not present or the key does not exist, this is a no-op and returns `Ok(())`.
 pub fn disable_autostart() -> Result<(), AutostartError> {
+    let _ = disable_autostart_at(HKEY_CURRENT_USER, RUN_KEY_PATH, LEGACY_APP_VALUE_NAME);
     disable_autostart_at(HKEY_CURRENT_USER, RUN_KEY_PATH, APP_VALUE_NAME)
 }
 
@@ -463,9 +475,9 @@ mod tests {
 
     #[test]
     fn test_registry_crud_on_isolated_test_key() {
-        let test_subkey = r"Software\MagicBridge\UnitTest_Autostart_Crud";
+        let test_subkey = r"Software\MacKeys\UnitTest_Autostart_Crud";
         let test_val_name = "TestApp";
-        let test_exe = PathBuf::from(r"C:\TestPath\magicbridge.exe");
+        let test_exe = PathBuf::from(r"C:\TestPath\mackeys.exe");
 
         // Clean up any leftovers from prior runs before starting.
         delete_test_key(HKEY_CURRENT_USER, test_subkey);
@@ -491,7 +503,7 @@ mod tests {
         let cmd = get_autostart_command_at(HKEY_CURRENT_USER, test_subkey, test_val_name)
             .expect("get after enable should succeed")
             .expect("command should be present");
-        assert_eq!(cmd, r#""C:\TestPath\magicbridge.exe""#);
+        assert_eq!(cmd, r#""C:\TestPath\mackeys.exe""#);
 
         // 4. Update with a new path.
         let new_exe = PathBuf::from(r"C:\NewPath with spaces\agent.exe");
@@ -518,7 +530,7 @@ mod tests {
 
         // Cleanup test subkey.
         delete_test_key(HKEY_CURRENT_USER, test_subkey);
-        delete_test_key(HKEY_CURRENT_USER, r"Software\MagicBridge");
+        delete_test_key(HKEY_CURRENT_USER, r"Software\MacKeys");
     }
 
     #[test]

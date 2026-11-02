@@ -1,6 +1,6 @@
-# Getting Support for MagicBridge ⌨️ 🌉
+# Getting Support for MacKeys ⌨️ 🌉
 
-Welcome to the **MagicBridge** support guide! Whether you need help setting up your Apple Magic Keyboard on Windows, encountered unexpected hardware behavior, or want to submit feedback, here is where to find answers:
+Welcome to the **MacKeys** support guide! Whether you need help setting up your Apple Magic Keyboard on Windows, encountered unexpected hardware behavior, or want to submit feedback, here is where to find answers:
 
 ---
 
@@ -19,18 +19,18 @@ Before opening an issue, check if your question is covered in our documentation:
 ## 2. Common Questions & Troubleshooting
 
 ### Q: Why does the physical Fn key not work?
-**A:** Windows inbox kernel driver `kbdhid.sys` intercepts and suppresses raw Apple Fn key events before user-mode applications can see them. MagicBridge provides user-configurable trigger keys (default: **Right Option / AltGr**, Right Control, or Caps Lock) to activate the Fn layer seamlessly.
+**A:** Windows inbox kernel driver `kbdhid.sys` intercepts and suppresses raw Apple Fn key events before user-mode applications can see them. MacKeys provides user-configurable trigger keys (default: **Right Option / AltGr**, Right Control, or Caps Lock) to activate the Fn layer seamlessly.
 
-### Q: Do I need administrator rights to install MagicBridge?
-**A:** **No.** MagicBridge is designed to run entirely in user space. The guided setup wizard installs into `%LOCALAPPDATA%\Programs\MagicBridge` without requiring UAC elevation.
+### Q: Do I need administrator rights to install MacKeys?
+**A:** **No.** MacKeys is designed to run entirely in user space. The guided setup wizard installs into `%LOCALAPPDATA%\Programs\MacKeys` without requiring UAC elevation.
 
-### Q: Does MagicBridge trigger game anti-cheat bans?
-**A:** **No.** MagicBridge uses standard Windows user-mode hooks (`WH_KEYBOARD_LL`). It contains **no kernel drivers (`.sys`)** and performs **no DLL injection**. In addition, the tray icon and hotkey allow you to pause remappings instantly while gaming.
+### Q: Does MacKeys trigger game anti-cheat bans?
+**A:** **No.** MacKeys uses standard Windows user-mode hooks (`WH_KEYBOARD_LL`). It contains **no kernel drivers (`.sys`)** and performs **no DLL injection**. In addition, the tray icon and hotkey allow you to pause remappings instantly while gaming.
 
 ---
 
 ## 3. How to Report Issues & Submit QA Reports
 
-- **Bug Reports:** Open a [Bug Report](https://github.com/DooperDrew/magicbridge/issues/new?template=bug_report.md) with your Windows build version and whether your keyboard is connected via Lightning USB or Bluetooth.
-- **Hardware QA Submissions:** Use the **🧪 Hardware QA** tab in `magicbridge-settings` to verify your physical keys, click **Export QA Log**, and paste it into a [Hardware QA Report](https://github.com/DooperDrew/magicbridge/issues/new?template=hardware_qa_report.md).
-- **Feature Requests & Ideas:** Submit a [Feature Request](https://github.com/DooperDrew/magicbridge/issues/new?template=feature_request.md).
+- **Bug Reports:** Open a [Bug Report](https://github.com/DooperDrew/mackeys-win/issues/new?template=bug_report.md) with your Windows build version and whether your keyboard is connected via Lightning USB or Bluetooth.
+- **Hardware QA Submissions:** Use the **🧪 Hardware QA** tab in `magicbridge-settings` to verify your physical keys, click **Export QA Log**, and paste it into a [Hardware QA Report](https://github.com/DooperDrew/mackeys-win/issues/new?template=hardware_qa_report.md).
+- **Feature Requests & Ideas:** Submit a [Feature Request](https://github.com/DooperDrew/mackeys-win/issues/new?template=feature_request.md).

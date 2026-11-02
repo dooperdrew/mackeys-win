@@ -1,4 +1,4 @@
-//! MagicBridge Unified Executable (runs daemon, installer, uninstaller, or settings GUI).
+//! MacKeys Unified Executable (runs daemon, installer, uninstaller, or settings GUI).
 //!
 //! Complies with single-binary UX requirements:
 //! - `--daemon`: Runs headless background hook and IPC daemon (zero window).
@@ -9,7 +9,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use eframe::{NativeOptions, egui::ViewportBuilder};
-use magicbridge_settings::{MagicBridgeApp, run_installer_gui, run_uninstaller_gui};
+use magicbridge_settings::{MacKeysApp, run_installer_gui, run_uninstaller_gui};
 
 fn main() -> Result<(), eframe::Error> {
     let args: Vec<String> = std::env::args().collect();
@@ -27,7 +27,7 @@ fn main() -> Result<(), eframe::Error> {
 
     // 3. Installer mode check:
     // Run the progressive Windows Setup Wizard if explicitly requested via `--install`,
-    // or if the executable filename itself indicates setup/installer (e.g. MagicBridge-Setup.exe).
+    // or if the executable filename itself indicates setup/installer (e.g. MacKeys-Setup.exe).
     let is_explicit_settings = args.iter().any(|a| a == "--settings");
     let is_explicit_install = args.iter().any(|a| a == "--install");
     let exe_name = std::env::current_exe()
@@ -48,13 +48,13 @@ fn main() -> Result<(), eframe::Error> {
         viewport: ViewportBuilder::default()
             .with_inner_size([960.0, 580.0])
             .with_min_inner_size([860.0, 480.0])
-            .with_title("MagicBridge Settings"),
+            .with_title("MacKeys Settings"),
         ..Default::default()
     };
 
     eframe::run_native(
-        "MagicBridge Settings",
+        "MacKeys Settings",
         native_options,
-        Box::new(|cc| Ok(Box::new(MagicBridgeApp::new(cc)))),
+        Box::new(|cc| Ok(Box::new(MacKeysApp::new(cc)))),
     )
 }

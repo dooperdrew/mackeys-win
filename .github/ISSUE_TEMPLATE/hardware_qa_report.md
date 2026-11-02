@@ -11,7 +11,7 @@ assignees: ""
 - **Connection Type:** [ ] USB Lightning Cable | [ ] Bluetooth Classic | [ ] Bluetooth LE
 - **Vendor & Product ID (if known):** [e.g. VID 0x05AC or 0x004C, PID 0x026C]
 - **Windows OS Version:** [e.g. Windows 11 23H2 x64, Windows 10 22H2 x64]
-- **MagicBridge Version:** [e.g. v0.2.0]
+- **MacKeys Version:** [e.g. v0.2.0]
 
 ### Verification Checklist (from 🧪 Hardware QA Tab)
 - [ ] Number of keys verified: `X / 109 keys (Y%)`

@@ -1,6 +1,6 @@
 # 08 — Community Growth & Multi-Device Product Roadmap
 
-This document serves as the **strategic master plan and living roadmap** for transforming **MagicBridge** into the premier, community-driven open-source suite for Apple peripherals on Windows.
+This document serves as the **strategic master plan and living roadmap** for transforming **MacKeys** into the premier, community-driven open-source suite for Apple peripherals on Windows.
 
 ---
 
@@ -11,7 +11,7 @@ This document serves as the **strategic master plan and living roadmap** for tra
 ```mermaid
 flowchart TD
     subgraph PHASE1["Phase 1: Frictionless Distribution"]
-        P1["WinGet Package Submission (winget install DooperDrew.MagicBridge)"]
+        P1["WinGet Package Submission (winget install DooperDrew.MacKeys)"]
         P2["Scoop Bucket & Community Package"]
         P3["README Visual Demo Asset (GIF/Video)"]
     end
@@ -19,7 +19,7 @@ flowchart TD
     subgraph PHASE2["Phase 2: Public Launch & Social Discovery"]
         L1["Hacker News 'Show HN' Launch"]
         L2["Reddit Community Launch (r/windows, r/apple, r/rust)"]
-        L3["Comparison Matrix: MagicBridge vs BootCamp vs Magic Utilities"]
+        L3["Comparison Matrix: MacKeys vs BootCamp vs Magic Utilities"]
     end
 
     subgraph PHASE3["Phase 3: Community Crowdsourcing"]
@@ -41,20 +41,20 @@ flowchart TD
 
 ## 2. Pillar 1: Frictionless Distribution Channels
 
-The easier it is to install MagicBridge, the faster adoption spreads.
+The easier it is to install MacKeys, the faster adoption spreads.
 
-### 2.1 Microsoft WinGet Submission (`winget install DooperDrew.MagicBridge`)
+### 2.1 Microsoft WinGet Submission (`winget install DooperDrew.MacKeys`)
 - **Status:** Manifests generated in [`packaging/winget/`](../packaging/winget/).
 - **How to Submit to Microsoft:**
   1. Fork [`microsoft/winget-pkgs`](https://github.com/microsoft/winget-pkgs).
-  2. Copy `packaging/winget/manifests/d/DooperDrew/MagicBridge/0.2.0/` into the upstream repo under `manifests/d/DooperDrew/MagicBridge/0.2.0/`.
+  2. Copy `packaging/winget/manifests/d/DooperDrew/MacKeys/0.2.0/` into the upstream repo under `manifests/d/DooperDrew/MacKeys/0.2.0/`.
   3. Validate locally with Windows Package Manager CLI:
      ```powershell
-     winget validate --manifest .\manifests\d\DooperDrew\MagicBridge\0.2.0\
+     winget validate --manifest .\manifests\d\DooperDrew\MacKeys\0.2.0\
      ```
   4. Submit Pull Request to `microsoft/winget-pkgs`. Once merged by Microsoft's automated pipeline, users worldwide can install with:
      ```powershell
-     winget install DooperDrew.MagicBridge
+     winget install DooperDrew.MacKeys
      ```
 
 ### 2.2 Scoop Community Manifest
@@ -70,7 +70,7 @@ The easier it is to install MagicBridge, the faster adoption spreads.
 ### 3.1 The "Show HN" (Hacker News) Launch
 - **Best Day / Time:** Tuesday or Wednesday, 07:00–08:30 AM PT (15:00–16:30 CET).
 - **Title Suggestion:**
-  > *Show HN: MagicBridge – An invisible, zero-idle-CPU Windows utility for Apple Magic Keyboards (Rust)*
+  > *Show HN: MacKeys – An invisible, zero-idle-CPU Windows utility for Apple Magic Keyboards (Rust)*
 - **Core Talking Points for Developers:**
   1. **Engineering Quality:** Pure Rust, `#![forbid(unsafe_code)]` in core, explicit safety invariants in Win32 wrappers.
   2. **Performance:** Zero-allocation `WH_KEYBOARD_LL` hook callback with latency benchmarked at **< 600 ns** (well within the 100 µs budget).
@@ -91,11 +91,11 @@ The easier it is to install MagicBridge, the faster adoption spreads.
   - The **🧪 Hardware QA** matrix lighting up green on keypresses.
 
 ### 3.3 Competitive Value Proposition
-Highlight why MagicBridge solves the problem better than alternatives:
+Highlight why MacKeys solves the problem better than alternatives:
 
 | Solution | Anti-Cheat Safe? | Price | CPU Overhead | Battery Telemetry | Open Source? |
 |---|---|---|---|---|---|
-| **MagicBridge** | **Yes (User Mode)** | **Free (MIT)** | **0% Idle CPU** | **Direct HID (USB & BT)** | **Yes (Rust)** |
+| **MacKeys** | **Yes (User Mode)** | **Free (MIT)** | **0% Idle CPU** | **Direct HID (USB & BT)** | **Yes (Rust)** |
 | *Apple Boot Camp Drivers* | Warning (Kernel `.sys`) | Free (Manual extract) | High (Idle polling) | No | No (Proprietary) |
 | *Magic Utilities* | Warning (Kernel driver) | Paid Subscription | Low | Yes | No (Closed) |
 | *PowerToys / AutoHotkey* | Yes (User Mode) | Free | Variable | No battery support | Yes (Heavy scripts) |
@@ -134,7 +134,7 @@ Create targeted GitHub Issues to attract international contributors:
 
 ## 5. Pillar 4: Multi-Apple-Device Roadmap (The Apple Suite for Windows)
 
-Once the A1843 keyboard reaches v1.0, MagicBridge can gradually expand into a comprehensive utility for all Apple peripherals on Windows:
+Once the A1843 keyboard reaches v1.0, MacKeys can gradually expand into a comprehensive utility for all Apple peripherals on Windows:
 
 ```mermaid
 timeline
@@ -166,7 +166,7 @@ Use this checklist to track community and product milestones over time:
 ### Distribution & Launch (Phase 1 & 2)
 - [x] Package manifests generated for WinGet (`packaging/winget/`) and Scoop (`packaging/scoop/`).
 - [x] Release packaging automation (`scripts/generate-manifests.ps1` and `package-release.ps1`).
-- [ ] Submit PR to `microsoft/winget-pkgs` for `DooperDrew.MagicBridge`.
+- [ ] Submit PR to `microsoft/winget-pkgs` for `DooperDrew.MacKeys`.
 - [ ] Record a 15-second demonstration GIF showing setup wizard, live battery, and QA key tester for `README.md`.
 - [ ] Post "Show HN" on Hacker News.
 - [ ] Post showcases on `r/windows11`, `r/apple`, and `r/rust`.

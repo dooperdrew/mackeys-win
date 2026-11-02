@@ -1,7 +1,7 @@
 # 01 — Vision
 
 > Status: **APPROVED / ACTIVE ARCHITECTURE (v0.2.0)**  
-> Application: **MagicBridge** (`https://github.com/DooperDrew/magicbridge`)
+> Application: **MacKeys** (`https://github.com/DooperDrew/mackeys-win`)
 
 ## Problem
 

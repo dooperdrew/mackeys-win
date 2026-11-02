@@ -1,4 +1,4 @@
-//! MagicBridge background agent entrypoint.
+//! MacKeys background agent entrypoint.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 

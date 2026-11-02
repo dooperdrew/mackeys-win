@@ -1,7 +1,7 @@
-//! Diagnostic debug logger for MagicBridge daemon (NFR-Q2).
+//! Diagnostic debug logger for MacKeys daemon (NFR-Q2).
 //!
 //! Provides zero-overhead logging when disabled (single relaxed atomic check),
-//! and writes diagnostic traces to `%APPDATA%\\MagicBridge\\debug.log` as well as
+//! and writes diagnostic traces to `%APPDATA%\\MacKeys\\debug.log` as well as
 //! an in-memory circular ring buffer when enabled.
 //!
 //! CRITICAL: In accordance with `NFR-P3`, logger calls MUST NEVER be placed

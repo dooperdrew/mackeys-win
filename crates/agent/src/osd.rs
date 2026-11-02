@@ -32,7 +32,7 @@ use windows::core::{PCWSTR, w};
 use magicbridge_core::TopRowMode;
 
 /// Window class name for the OSD overlay window.
-const OSD_CLASS_NAME: PCWSTR = w!("MagicBridge_OSD_Class");
+const OSD_CLASS_NAME: PCWSTR = w!("MacKeys_OSD_Class");
 
 /// Timer ID for auto-dismissing the OSD window.
 const IDT_OSD_HIDE: usize = 201;
@@ -93,7 +93,7 @@ fn paint_osd(hwnd: HWND, hdc: HDC) {
         .lock()
         .ok()
         .and_then(|guard| guard.clone())
-        .unwrap_or_else(|| ("MagicBridge".to_string(), String::new()));
+        .unwrap_or_else(|| ("MacKeys".to_string(), String::new()));
 
     // 1. Dark Acrylic background: #14181E
     // SAFETY: CreateSolidBrush creates background fill.
@@ -252,7 +252,7 @@ impl OsdOverlay {
             CreateWindowExW(
                 ex_style,
                 OSD_CLASS_NAME,
-                w!("MagicBridge OSD"),
+                w!("MacKeys OSD"),
                 WS_POPUP,
                 0,
                 0,

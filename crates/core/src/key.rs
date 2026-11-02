@@ -1,7 +1,7 @@
 //! Virtual key models, Windows virtual key constants, and scancode mappings.
 //!
 //! Provides platform-independent representations of keyboard keys, virtual key codes (VK),
-//! hardware scancodes, extended-key flags, and the MagicBridge synthetic event sentinel.
+//! hardware scancodes, extended-key flags, and the MacKeys synthetic event sentinel.
 //!
 //! Conforms to `NFR-Q1` (pure safe Rust, `#![forbid(unsafe_code)]`, zero Win32 crate dependencies).
 

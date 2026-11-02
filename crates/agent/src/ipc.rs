@@ -38,7 +38,7 @@ use windows::core::PCWSTR;
 use crate::state::DaemonState;
 
 /// Default named pipe name per user session (Milestone 2.5).
-pub const DEFAULT_PIPE_NAME: &str = r"\\.\pipe\MagicBridge_Agent_IPC";
+pub const DEFAULT_PIPE_NAME: &str = r"\\.\pipe\MacKeys_Agent_IPC";
 
 /// Custom window message to notify the agent message window of an IPC state change.
 pub const WM_IPC_STATE_UPDATED: u32 = 0x8000 + 10; // WM_APP + 10
@@ -661,7 +661,7 @@ impl IpcServer {
         let (ready_tx, ready_rx) = std::sync::mpsc::channel();
 
         let thread_handle = thread::Builder::new()
-            .name("MagicBridge_IPC".to_string())
+            .name("MacKeys_IPC".to_string())
             .spawn(move || {
                 Self::server_loop(
                     &pipe_name_clone,
@@ -1146,11 +1146,7 @@ mod tests {
         use std::sync::atomic::AtomicU64;
         static TEST_COUNTER: AtomicU64 = AtomicU64::new(1);
         let id = TEST_COUNTER.fetch_add(1, Ordering::SeqCst);
-        let pipe_name = format!(
-            r"\\.\pipe\MagicBridge_Test_Pipe_{}_{}",
-            std::process::id(),
-            id
-        );
+        let pipe_name = format!(r"\\.\pipe\MacKeys_Test_Pipe_{}_{}", std::process::id(), id);
 
         let mut config = Config::default();
         let us_profile = NamedProfile::default_us();

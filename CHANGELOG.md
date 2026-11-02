@@ -4,6 +4,27 @@ All development steps, hardware discoveries, architectural decisions, and commit
 
 ---
 
+## 2026-11-02 — Brand Realignment & SEO Discoverability: Transition to MacKeys Win (`mackeys-win`)
+
+### Identity, Narrative & GitHub Alignment
+- **Repository Rename & Discoverability:**
+  - Renamed GitHub repository from `magicbridge` to [`mackeys-win`](https://github.com/DooperDrew/mackeys-win) to eliminate branding collisions with blockchain/crypto bridges and accurately convey the project's purpose.
+  - Expanded GitHub topics to the maximum (20/20) covering high-volume queries: `windows-11`, `windows-10`, `magic-keyboard`, `apple-keyboard`, `mac-keyboard`, `magic-mouse`, `fn-key`, `media-keys`, `battery-indicator`, `driverless`, `anti-cheat-safe`, `mackeys`.
+  - Updated repository description and added homepage link directly to `#readme`.
+- **Executable & Packaging Renaming:**
+  - Unified binary renamed to `mackeys.exe`.
+  - Standalone single-file installer renamed to `MacKeys-Setup.exe` (and `MacKeys-v0.4.1-Setup.exe`).
+  - Portable zip archive renamed to `MacKeys-v0.4.1-portable.zip`.
+  - Added seamless migration in `Config::default_config_dir()`: automatically migrates existing user keymaps from `%APPDATA%\MagicBridge` to `%APPDATA%\MacKeys` with zero data loss.
+  - Updated autostart key to `"MacKeys"` in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` and uninstall registration to `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys`.
+  - Staged Scoop manifest `packaging/scoop/mackeys.json` and WinGet manifests `packaging/winget/manifests/d/DooperDrew/MacKeys/0.4.1/`.
+- **Documentation & UI Localization:**
+  - Updated user-facing titles, setup wizard headings, and uninstaller in `crates/settings/locales/en.toml` and `crates/settings/locales/it.toml` from "MagicBridge" to "MacKeys".
+  - Refreshed [`README.md`](README.md), [`AGENTS.md`](AGENTS.md), and all project specifications across `docs/` to present the cohesive "MacKeys Win" narrative.
+  - Added an SEO competitive comparison matrix and search intent FAQ in the README.
+
+---
+
 ## 2026-11-01 — Milestone M19: Field-Test Fixes, Direct Hardware Detection & Honest Pre-Remap Physical QA Capture (v0.4.1)
 
 ### Emergency Stability Hotfix & Dist Pipeline Reorganization

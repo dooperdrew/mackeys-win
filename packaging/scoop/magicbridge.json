@@ -1,28 +1,28 @@
 ﻿{
     "version": "0.4.1",
     "description": "Native, ultra-lightweight Windows utility making Apple Magic Keyboards behave as first-class Windows keyboards.",
-    "homepage": "https://github.com/DooperDrew/magicbridge",
+    "homepage": "https://github.com/DooperDrew/mackeys-win",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/DooperDrew/magicbridge/releases/download/v0.4.1/MagicBridge-v0.4.1-portable.zip",
-            "hash": "18103422EFC3CED65B021F3DC710C33DC72050FD1A702BFF9ECEDDB2D40266FA"
+            "url": "https://github.com/DooperDrew/mackeys-win/releases/download/v0.4.1/MacKeys-v0.4.1-portable.zip",
+            "hash": "48BCE47740CD11575C4A9FFD4F12DA726D8B49AC59D4F476FF295D21BE470644"
         }
     },
     "bin": [
-        "magicbridge.exe"
+        "mackeys.exe"
     ],
     "shortcuts": [
         [
-            "magicbridge.exe",
-            "MagicBridge"
+            "mackeys.exe",
+            "MacKeys"
         ]
     ],
     "checkver": "github",
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/DooperDrew/magicbridge/releases/download/v$version/MagicBridge-v$version-portable.zip"
+                "url": "https://github.com/DooperDrew/mackeys-win/releases/download/v$version/MacKeys-v$version-portable.zip"
             }
         }
     }

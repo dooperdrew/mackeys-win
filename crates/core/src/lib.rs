@@ -1,4 +1,4 @@
-//! Pure MagicBridge logic: key model, mapping engine and config schema.
+//! Pure MacKeys logic: key model, mapping engine and config schema.
 //!
 //! This crate is platform-independent and unit-tested. It must not depend on
 //! the `windows` crate or perform any I/O in the hot path.

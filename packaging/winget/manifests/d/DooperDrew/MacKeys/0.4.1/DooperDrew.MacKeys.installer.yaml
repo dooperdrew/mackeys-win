@@ -1,0 +1,15 @@
+﻿# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.9.0.schema.json
+PackageIdentifier: DooperDrew.MacKeys
+PackageVersion: 0.4.1
+InstallerType: zip
+NestedInstallerType: portable
+NestedInstallerFiles:
+  - RelativeFilePath: mackeys.exe
+    PortableCommandAlias: magicbridge
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/DooperDrew/mackeys-win/releases/download/v0.4.1/MacKeys-v0.4.1-portable.zip
+    InstallerSha256: 48BCE47740CD11575C4A9FFD4F12DA726D8B49AC59D4F476FF295D21BE470644
+    UpgradeBehavior: install
+ManifestType: installer
+ManifestVersion: 1.9.0

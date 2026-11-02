@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-    Installs MagicBridge for the current user without requiring Administrator privileges.
+    Installs MacKeys for the current user without requiring Administrator privileges.
 
 .DESCRIPTION
-    Installs MagicBridge into %LOCALAPPDATA%\Programs\MagicBridge, creates Start Menu
+    Installs MacKeys into %LOCALAPPDATA%\Programs\MacKeys, creates Start Menu
     and Desktop shortcuts, registers the Windows Uninstall entry, optionally configures autostart
     on Windows logon (HKCU), and launches the background agent.
 
 .PARAMETER TargetDir
-    Installation directory. Defaults to "$env:LOCALAPPDATA\Programs\MagicBridge".
+    Installation directory. Defaults to "$env:LOCALAPPDATA\Programs\MacKeys".
 
 .PARAMETER CreateDesktopShortcut
-    Creates a desktop shortcut to MagicBridge Settings. Default is on.
+    Creates a desktop shortcut to MacKeys Settings. Default is on.
 
 .PARAMETER NoDesktopShortcut
     Disables creating the desktop shortcut.
@@ -23,25 +23,25 @@
     Disables creating Start Menu shortcuts.
 
 .PARAMETER EnableAutostart
-    Configures MagicBridge to launch automatically on Windows login (per-user HKCU). Default is on.
+    Configures MacKeys to launch automatically on Windows login (per-user HKCU). Default is on.
 
 .PARAMETER NoAutostart
     Disables autostart on Windows login.
 
 .PARAMETER LaunchNow
-    Starts the MagicBridge background agent immediately after installation. Default is on.
+    Starts the MacKeys background agent immediately after installation. Default is on.
 
 .PARAMETER NoLaunch
     Prevents launching the background agent immediately after installation.
 
 .EXAMPLE
     .\install.ps1
-    .\install.ps1 -TargetDir "C:\Tools\MagicBridge" -NoAutostart
+    .\install.ps1 -TargetDir "C:\Tools\MacKeys" -NoAutostart
 #>
 
 [CmdletBinding()]
 param (
-    [string]$TargetDir = "$env:LOCALAPPDATA\Programs\MagicBridge",
+    [string]$TargetDir = "$env:LOCALAPPDATA\Programs\MacKeys",
     [switch]$CreateDesktopShortcut,
     [switch]$NoDesktopShortcut,
     [switch]$CreateStartMenuShortcut,
@@ -60,7 +60,7 @@ $ResolvedAutostart = if ($NoAutostart) { $false } else { $true }
 $ResolvedLaunchNow = if ($NoLaunch) { $false } else { $true }
 
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "         MagicBridge User-Space Installer         " -ForegroundColor Cyan
+Write-Host "         MacKeys User-Space Installer         " -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Cyan
 
 # Source files location (either repository root or unpacked release archive)
@@ -101,7 +101,7 @@ Write-Host "Target directory: $TargetDir"
 Write-Host "Version:          v$Version"
 
 # Stop running instances if any
-Write-Host "`nStopping any existing MagicBridge processes..." -ForegroundColor Yellow
+Write-Host "`nStopping any existing MacKeys processes..." -ForegroundColor Yellow
 Get-Process -Name "magicbridge-agent", "magicbridge-settings" -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Host "  Stopping $($_.ProcessName) (PID $($_.Id))..."
     try {
@@ -164,18 +164,18 @@ $WshShell = New-Object -ComObject WScript.Shell
 # Create Start Menu Shortcuts
 if ($ResolvedStartMenuShortcut) {
     Write-Host "Creating Start Menu shortcuts..." -ForegroundColor Cyan
-    $StartMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\MagicBridge"
+    $StartMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\MacKeys"
     if (-not (Test-Path $StartMenuDir)) {
         New-Item -ItemType Directory -Path $StartMenuDir -Force | Out-Null
     }
 
-    $SettingsShortcut = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MagicBridge Settings.lnk"))
+    $SettingsShortcut = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MacKeys Settings.lnk"))
     $SettingsShortcut.TargetPath = Join-Path $TargetDir "magicbridge-settings.exe"
     $SettingsShortcut.WorkingDirectory = $TargetDir
     $SettingsShortcut.Description = "Configure Apple Magic Keyboard mappings and profiles."
     $SettingsShortcut.Save()
 
-    $AgentShortcut = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MagicBridge Agent.lnk"))
+    $AgentShortcut = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MacKeys Agent.lnk"))
     $AgentShortcut.TargetPath = Join-Path $TargetDir "magicbridge-agent.exe"
     $AgentShortcut.WorkingDirectory = $TargetDir
     $AgentShortcut.Description = "Background keyboard remap hook and battery monitor."
@@ -187,10 +187,10 @@ if ($ResolvedDesktopShortcut) {
     Write-Host "Creating Desktop shortcut..." -ForegroundColor Cyan
     $DesktopDir = [Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)
     if (Test-Path $DesktopDir) {
-        $DesktopShortcut = $WshShell.CreateShortcut((Join-Path $DesktopDir "MagicBridge Settings.lnk"))
+        $DesktopShortcut = $WshShell.CreateShortcut((Join-Path $DesktopDir "MacKeys Settings.lnk"))
         $DesktopShortcut.TargetPath = Join-Path $TargetDir "magicbridge-settings.exe"
         $DesktopShortcut.WorkingDirectory = $TargetDir
-        $DesktopShortcut.Description = "MagicBridge - Apple Magic Keyboard for Windows."
+        $DesktopShortcut.Description = "MacKeys - Apple Magic Keyboard for Windows."
         $DesktopShortcut.Save()
     }
 }
@@ -200,37 +200,37 @@ if ($ResolvedAutostart) {
     Write-Host "Configuring autostart in HKCU Run registry..." -ForegroundColor Cyan
     $RunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
     $AgentBinaryPath = "`"$TargetDir\magicbridge-agent.exe`""
-    Set-ItemProperty -Path $RunKey -Name "MagicBridge" -Value $AgentBinaryPath
+    Set-ItemProperty -Path $RunKey -Name "MacKeys" -Value $AgentBinaryPath
     Write-Host "  Autostart registered: $AgentBinaryPath" -ForegroundColor Green
 }
 
 # Register Windows Add/Remove Programs
 Write-Host "Registering in Windows Add/Remove Programs..." -ForegroundColor Cyan
-$UninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MagicBridge"
+$UninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys"
 if (-not (Test-Path $UninstallKey)) {
     New-Item -Path $UninstallKey -Force | Out-Null
 }
 $TotalBytes = (Get-ChildItem -Path $TargetDir -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
 $EstimatedKB = [int][math]::Round(($TotalBytes / 1KB))
 
-Set-ItemProperty -Path $UninstallKey -Name "DisplayName" -Value "MagicBridge (Apple Magic Keyboard for Windows)"
+Set-ItemProperty -Path $UninstallKey -Name "DisplayName" -Value "MacKeys (Apple Magic Keyboard for Windows)"
 Set-ItemProperty -Path $UninstallKey -Name "DisplayVersion" -Value $Version
-Set-ItemProperty -Path $UninstallKey -Name "Publisher" -Value "MagicBridge Contributors"
+Set-ItemProperty -Path $UninstallKey -Name "Publisher" -Value "MacKeys Contributors"
 Set-ItemProperty -Path $UninstallKey -Name "InstallLocation" -Value $TargetDir
 Set-ItemProperty -Path $UninstallKey -Name "DisplayIcon" -Value "$TargetDir\magicbridge-agent.exe,0"
 Set-ItemProperty -Path $UninstallKey -Name "UninstallString" -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$TargetDir\uninstall.ps1`""
 Set-ItemProperty -Path $UninstallKey -Name "QuietUninstallString" -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$TargetDir\uninstall.ps1`" -Silent"
 Set-ItemProperty -Path $UninstallKey -Name "InstallDate" -Value ((Get-Date).ToString("yyyyMMdd"))
 Set-ItemProperty -Path $UninstallKey -Name "EstimatedSize" -Value $EstimatedKB -Type DWord
-Set-ItemProperty -Path $UninstallKey -Name "URLInfoAbout" -Value "https://github.com/DooperDrew/magicbridge"
-Set-ItemProperty -Path $UninstallKey -Name "HelpLink" -Value "https://github.com/DooperDrew/magicbridge/issues"
-Set-ItemProperty -Path $UninstallKey -Name "URLUpdateInfo" -Value "https://github.com/DooperDrew/magicbridge/releases"
+Set-ItemProperty -Path $UninstallKey -Name "URLInfoAbout" -Value "https://github.com/DooperDrew/mackeys-win"
+Set-ItemProperty -Path $UninstallKey -Name "HelpLink" -Value "https://github.com/DooperDrew/mackeys-win/issues"
+Set-ItemProperty -Path $UninstallKey -Name "URLUpdateInfo" -Value "https://github.com/DooperDrew/mackeys-win/releases"
 Set-ItemProperty -Path $UninstallKey -Name "NoModify" -Value 1 -Type DWord
 Set-ItemProperty -Path $UninstallKey -Name "NoRepair" -Value 1 -Type DWord
 
 # Launch agent if requested
 if ($ResolvedLaunchNow) {
-    Write-Host "Launching MagicBridge background agent..." -ForegroundColor Cyan
+    Write-Host "Launching MacKeys background agent..." -ForegroundColor Cyan
     Start-Process -FilePath (Join-Path $TargetDir "magicbridge-agent.exe") -WorkingDirectory $TargetDir
 }
 
@@ -238,5 +238,5 @@ Write-Host "`n==================================================" -ForegroundCol
 Write-Host "       MAGICBRIDGE INSTALLATION COMPLETED         " -ForegroundColor Green
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host "Installation path: $TargetDir"
-Write-Host "Configuration dir: $env:APPDATA\MagicBridge"
+Write-Host "Configuration dir: $env:APPDATA\MacKeys"
 Write-Host ""

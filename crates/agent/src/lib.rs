@@ -1,4 +1,4 @@
-//! MagicBridge background agent library.
+//! MacKeys background agent library.
 //!
 //! Provides the autostart manager, input hooks, HID battery reader,
 //! tray interface, IPC daemon, game mode manager, and diagnostic logger.
@@ -72,7 +72,7 @@ pub fn run_daemon() -> i32 {
         .map(|d| d.join("debug.log"))
         .ok();
     logger::init(config.debug_logging, log_path);
-    logger::log("INFO", "main", "MagicBridge Agent starting up");
+    logger::log("INFO", "main", "MacKeys Agent starting up");
 
     // 3. Initialize daemon state and atomic mapping table (Milestone 2.1 & 2.5).
     let state = state::DaemonState::new(config, config_path);
@@ -93,7 +93,7 @@ pub fn run_daemon() -> i32 {
         }
     };
 
-    // 5. Start Named Pipe IPC server (\\.\pipe\MagicBridge_Agent_IPC).
+    // 5. Start Named Pipe IPC server (\\.\pipe\MacKeys_Agent_IPC).
     let _ipc_server = match ipc::IpcServer::start_default(
         shared_state,
         atomic_table,
@@ -101,7 +101,7 @@ pub fn run_daemon() -> i32 {
     ) {
         Ok(srv) => Some(srv),
         Err(e) => {
-            eprintln!("[MagicBridge] Warning: failed to start Named Pipe IPC server: {e}");
+            eprintln!("[MacKeys] Warning: failed to start Named Pipe IPC server: {e}");
             None
         }
     };

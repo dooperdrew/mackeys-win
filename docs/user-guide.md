@@ -1,4 +1,4 @@
-# MagicBridge User Guide ⌨️ 🌉
+# MacKeys User Guide ⌨️ 🌉
 
 **Comprehensive User Manual & Technical Guide for the Apple Magic Keyboard Family (Full-Size & Compact) on Windows 10 & 11**
 
@@ -24,7 +24,7 @@
 
 ## 1. Introduction & Overview
 
-**MagicBridge** is a native, ultra-lightweight Windows 10 and 11 utility tailored specifically for the entire family of **Apple Keyboards**:
+**MacKeys** is a native, ultra-lightweight Windows 10 and 11 utility tailored specifically for the entire family of **Apple Keyboards**:
 - **Full-Size with Numeric Keypad:** Magic Keyboard with Numeric Keypad (A1843, A2520, A3123) and Apple Keyboard with Numpad Wired (A1243).
 - **Compact (Tenkeyless):** Magic Keyboard Compact (A1644, A2449, A2450, A3122) and Apple Wireless Keyboard (A1314).
 
@@ -35,7 +35,7 @@ When connected to Windows, Apple keyboards normally suffer from several frustrat
 - The top-row function and media keys do not toggle naturally.
 - Windows does not display battery percentage for Apple Bluetooth keyboards.
 
-MagicBridge fixes all of these issues while maintaining uncompromising system integrity:
+MacKeys fixes all of these issues while maintaining uncompromising system integrity:
 - **0% Idle CPU:** Purely event-driven Win32 messaging and hooks. Zero polling loops.
 - **Anti-Cheat Safe:** No kernel drivers (`.sys`), no DLL injection, no memory manipulation.
 - **Zero Background GUI:** The settings window runs only when open. Closing it leaves zero memory footprint.
@@ -45,7 +45,7 @@ MagicBridge fixes all of these issues while maintaining uncompromising system in
 
 ## 2. Supported Apple Keyboard Models
 
-MagicBridge supports all modern and legacy Apple desktop keyboards:
+MacKeys supports all modern and legacy Apple desktop keyboards:
 
 | Model ID | Hardware Name | Form Factor | Connectivity | Battery Gauge |
 |---|---|---|---|---|
@@ -62,7 +62,7 @@ MagicBridge supports all modern and legacy Apple desktop keyboards:
 ### Auto-Detection & Switching
 - In **General Settings** or the **Setup Wizard**, click `[Auto-Detect Model]` to identify your model via its USB/Bluetooth Product ID.
 - The visual layout in the Settings GUI dynamically switches between Full-Size (with numpad) and Compact (with compact arrow cluster).
-- **Compact Navigation Combos:** On compact models lacking dedicated navigation blocks, MagicBridge provides built-in Fn layer navigation:
+- **Compact Navigation Combos:** On compact models lacking dedicated navigation blocks, MacKeys provides built-in Fn layer navigation:
   - `Fn + Backspace` &rarr; Forward Delete (`Delete`)
   - `Fn + Left / Right` &rarr; `Home` / `End`
   - `Fn + Up / Down` &rarr; `Page Up` / `Page Down`
@@ -83,28 +83,28 @@ MagicBridge supports all modern and legacy Apple desktop keyboards:
 Install directly using Windows Package Manager:
 ```powershell
 # Install from official repository:
-winget install DooperDrew.MagicBridge
+winget install DooperDrew.MacKeys
 
 # Or install from local repo manifest:
-winget install --manifest packaging/winget/manifests/d/DooperDrew/MagicBridge/0.2.0/
+winget install --manifest packaging/winget/manifests/d/DooperDrew/MacKeys/0.2.0/
 ```
 
 ### Method 2: Scoop Package Manager
 Install via Scoop for clean user-space installation and automatic environment handling:
 ```powershell
-scoop install https://raw.githubusercontent.com/DooperDrew/magicbridge/main/packaging/scoop/magicbridge.json
+scoop install https://raw.githubusercontent.com/DooperDrew/mackeys-win/main/packaging/scoop/magicbridge.json
 ```
 
 ### Method 3: Guided Setup Wizard (Zero-Elevation GUI)
-MagicBridge provides a zero-elevation graphical setup wizard:
-1. Download `MagicBridge-v<version>-windows-x64.zip` from [GitHub Releases](https://github.com/DooperDrew/magicbridge/releases/latest).
+MacKeys provides a zero-elevation graphical setup wizard:
+1. Download `MacKeys-v<version>-windows-x64.zip` from [GitHub Releases](https://github.com/DooperDrew/mackeys-win/releases/latest).
 2. Extract the archive, and double-click `setup.cmd` (or open PowerShell and run `.\setup-wizard.ps1`).
 3. The guided setup wizard allows you to:
-   - Select installation destination (default: `%LOCALAPPDATA%\Programs\MagicBridge`, no Administrator privileges needed).
+   - Select installation destination (default: `%LOCALAPPDATA%\Programs\MacKeys`, no Administrator privileges needed).
    - Toggle Start Menu and Desktop shortcuts.
    - Configure automatic launch on Windows sign-in (per-user registry `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
    - Automatically launch the settings wizard upon completion.
-4. MagicBridge registers cleanly in Windows **Installed apps** (Settings &rarr; Apps / Control Panel) with full uninstallation support.
+4. MacKeys registers cleanly in Windows **Installed apps** (Settings &rarr; Apps / Control Panel) with full uninstallation support.
 
 For unattended or headless environments:
 ```powershell
@@ -119,8 +119,8 @@ For unattended or headless environments:
 ```
 
 ### Method 4: Portable Run (No Installation Required)
-1. Download `MagicBridge-v<version>-windows-x64.zip` from the GitHub Releases page.
-2. Extract the archive into any folder of your choice (e.g. `C:\Tools\MagicBridge` or `%LOCALAPPDATA%\MagicBridge`).
+1. Download `MacKeys-v<version>-windows-x64.zip` from the GitHub Releases page.
+2. Extract the archive into any folder of your choice (e.g. `C:\Tools\MacKeys` or `%LOCALAPPDATA%\MacKeys`).
 3. Double-click `magicbridge-agent.exe`.
 4. A keyboard icon will appear in your Windows System Tray (notification area next to the clock).
 5. Right-click the tray icon and select **Open Settings** (or launch `magicbridge-settings.exe`) to customize your layout.
@@ -134,7 +134,7 @@ The A1843 keyboard can be used interchangeably over a Lightning-to-USB cable or 
 ### Connecting via Lightning-to-USB Cable
 1. Connect the keyboard to your PC using an Apple Lightning-to-USB cable.
 2. Windows detects the keyboard as a standard USB Composite Device (`VID: 0x05AC`, `PID: 0x026C`).
-3. MagicBridge automatically detects the keyboard arrival, engages remapping, and begins monitoring battery charging status.
+3. MacKeys automatically detects the keyboard arrival, engages remapping, and begins monitoring battery charging status.
 4. The keyboard battery charges continuously while plugged in.
 
 ### Connecting via Bluetooth Classic
@@ -143,23 +143,23 @@ The A1843 keyboard can be used interchangeably over a Lightning-to-USB cable or 
 3. If the keyboard was previously paired to a Mac, toggle the power switch off and on again to put it in discovery mode.
 4. Select **Magic Keyboard with Numeric Keypad** (`VID: 0x004C`, `PID: 0x026C`) from the list of available devices.
 5. Windows may prompt you to type a 6-to-8 digit PIN code on the Magic Keyboard followed by the `Return` key.
-6. Once paired, MagicBridge instantly activates your active profile.
+6. Once paired, MacKeys instantly activates your active profile.
 
 ### Hot-Swapping Between USB and Bluetooth
-You can plug or unplug the Lightning cable at any time. MagicBridge listens to Windows PnP device change notifications (`WM_DEVICECHANGE`) and seamlessly transitions between USB and Bluetooth transports without dropping keystrokes or losing your active profile.
+You can plug or unplug the Lightning cable at any time. MacKeys listens to Windows PnP device change notifications (`WM_DEVICECHANGE`) and seamlessly transitions between USB and Bluetooth transports without dropping keystrokes or losing your active profile.
 
 ---
 
 ## 4. System Tray Controls
 
-The MagicBridge background agent lives in the Windows notification area. Right-clicking the tray icon provides quick access to core functions:
+The MacKeys background agent lives in the Windows notification area. Right-clicking the tray icon provides quick access to core functions:
 
 - **Enable Remapping (Checked):** Toggle all key remapping on or off. When disabled, the keyboard acts as a generic Windows keyboard.
 - **Top Row Mode:**
   - *Media Keys First:* Pressing F7–F12 controls playback and volume. Pressing `Fn + F1–F12` sends standard function keys.
   - *F-Keys First:* Pressing F1–F12 sends standard Windows function keys (ideal for software development and gaming). Pressing `Fn + F1–F12` triggers media controls.
 - **Profile Submenu:** Switch between your configured profiles (e.g., *ISO Italian*, *ANSI US*, *Gaming*) with a single click.
-- **Battery Tooltip:** Hovering over the tray icon displays the current battery level and connection mode (e.g. `MagicBridge: 88% (Bluetooth) - Active`).
+- **Battery Tooltip:** Hovering over the tray icon displays the current battery level and connection mode (e.g. `MacKeys: 88% (Bluetooth) - Active`).
 - **Open Settings:** Launches the visual configuration GUI (`magicbridge-settings.exe`).
 - **Quit:** Unloads keyboard hooks, restores all keys to Windows defaults, and shuts down the agent cleanly.
 
@@ -170,7 +170,7 @@ The MagicBridge background agent lives in the Windows notification area. Right-c
 ### Why a User-Mode Trigger Key?
 On Windows, the inbox keyboard driver (`kbdhid.sys`) opens the A1843 keyboard exclusively in kernel mode and strips the physical `Fn` usage (`0x00FF:0x0003`) before user-mode software can see it. 
 
-MagicBridge bypasses this limitation by allowing you to designate any convenient key as your **Fn trigger**.
+MacKeys bypasses this limitation by allowing you to designate any convenient key as your **Fn trigger**.
 - **Default Fn Trigger:** **Right Option (`VK_RMENU`)**.
 - **Alternative Choices:** Right Control, `F19`, or any other key configured in Settings.
 
@@ -226,7 +226,7 @@ The top row of the A1843 keyboard contains function keys F1 through F12 alongsid
 
 On Apple keyboards, the lower-left modifier keys are physically laid out as `Control`, `Option`, `Command`. On Windows PC keyboards, they are arranged as `Ctrl`, `Win`, `Alt`.
 
-MagicBridge provides one-click modifier layout presets:
+MacKeys provides one-click modifier layout presets:
 
 ### 1. Windows Layout Preset (Recommended for PC Users)
 - Left Command (`Cmd`) &rarr; **Left Alt** (`VK_LMENU`)
@@ -249,9 +249,9 @@ Each modifier can be customized independently in the Settings GUI.
 
 ## 8. Missing Windows Keys & Special Functions
 
-The A1843 keyboard features an extended numeric keypad and top-row keys F13 through F19. By default, MagicBridge maps these to standard Windows keys missing from Apple hardware:
+The A1843 keyboard features an extended numeric keypad and top-row keys F13 through F19. By default, MacKeys maps these to standard Windows keys missing from Apple hardware:
 
-| Apple Physical Key | MagicBridge Default Mapping | Windows Function |
+| Apple Physical Key | MacKeys Default Mapping | Windows Function |
 |---|---|---|
 | **F13** | `VK_SNAPSHOT` | **Print Screen** (capture screen) |
 | **F14** | `VK_SCROLL` | **Scroll Lock** |
@@ -272,7 +272,7 @@ In the Settings GUI, any key from `F13` to `F19` or `Clear` can be assigned to:
 ## 9. Profiles & Multi-Language Layouts
 
 ### Named Profiles
-MagicBridge allows you to create and maintain multiple independent **Profiles**. Each profile stores:
+MacKeys allows you to create and maintain multiple independent **Profiles**. Each profile stores:
 - Active physical and language layout (detected Windows layouts or full worldwide catalog: Italian, US, UK, German, French, Spanish, Portuguese, Swiss, Nordic, Japanese JIS, Dutch, Polish, Russian, Ukrainian, Turkish, Czech, Hungarian, Greek, Arabic, Hebrew, Korean, Chinese, or Custom).
 - Modifier preset (Windows, Mac, or Custom).
 - Top-row mode (Media first vs. F-keys first).
@@ -303,13 +303,13 @@ The Settings GUI provides a faithful, interactive visual representation of the A
 ### The ISO Italian AltGr Quirk
 On Italian ISO layouts, Windows synthesizes an artificial Left Control key event (`scancode = 0x21D`) approximately 0.8 milliseconds before any `AltGr` (Right Option) press.
 
-MagicBridge includes built-in hardware quirk suppression: whenever Right Option is remapped or used as the Fn trigger key, MagicBridge intercepts and swallows the synthetic `0x21D` scancode, preventing unexpected `Ctrl` triggers in your applications.
+MacKeys includes built-in hardware quirk suppression: whenever Right Option is remapped or used as the Fn trigger key, MacKeys intercepts and swallows the synthetic `0x21D` scancode, preventing unexpected `Ctrl` triggers in your applications.
 
 ---
 
 ## 10. Battery Monitoring & Toast Alerts
 
-MagicBridge queries battery levels directly from the Apple hardware:
+MacKeys queries battery levels directly from the Apple hardware:
 - **Direct Apple Vendor Telemetry:** Uses Apple Vendor Collection `0xFF00:0x0014`, input report `0x90` (`[0x90, flags, percentage]`) over both USB and Bluetooth.
 - **Windows PnP Fallback:** If the HID report is temporarily inaccessible, queries the Windows Bluetooth Battery property.
 - **Zero Overhead:** Battery status is polled infrequently (default: every 10 minutes) on a background thread.
@@ -320,10 +320,10 @@ MagicBridge queries battery levels directly from the Apple hardware:
 
 ## 11. Gaming & Anti-Cheat Compatibility
 
-### Why MagicBridge is Anti-Cheat Safe
+### Why MacKeys is Anti-Cheat Safe
 Many keyboard remappers use kernel-mode filter drivers (`.sys` files) or inject DLLs into running game processes. These invasive techniques frequently trigger bans by modern anti-cheat systems such as **Riot Vanguard (Valorant)**, **Easy Anti-Cheat (Fortnite, Apex Legends)**, and **BattlEye**.
 
-MagicBridge is engineered with safety as a top priority:
+MacKeys is engineered with safety as a top priority:
 - **Zero Kernel Drivers:** Operates strictly in user mode via standard Win32 input APIs.
 - **Zero DLL Injection:** Never injects code or threads into any other process.
 - **Zero Memory Modification:** Does not read or write process memory.
@@ -346,30 +346,30 @@ Windows enforces **User Interface Privilege Isolation (UIPI)**. Under UIPI, appl
 
 *Workaround:*
 - For 99% of daily desktop tasks (browsers, office suites, editors, games), standard user mode is ideal.
-- If you frequently work inside elevated windows, right-click `magicbridge-agent.exe` and select **Run as Administrator**, or configure a scheduled task to run MagicBridge with highest privileges at logon.
+- If you frequently work inside elevated windows, right-click `magicbridge-agent.exe` and select **Run as Administrator**, or configure a scheduled task to run MacKeys with highest privileges at logon.
 
 ### 2. Physical Eject & Physical Fn Stripped in Kernel
 As documented in `docs/hardware-findings.md`, Windows' built-in driver `kbdhid.sys` locks the keyboard's primary collection and discards the physical `Fn` usage (`0x00FF:0x0003`) and `Eject` key (`0x000C:0x00B8`) before they reach user mode.
-- *Solution:* MagicBridge uses the user-configurable trigger key (default: Right Option) for the Fn layer, and maps `F13`–`F15` to standard missing keys.
+- *Solution:* MacKeys uses the user-configurable trigger key (default: Right Option) for the Fn layer, and maps `F13`–`F15` to standard missing keys.
 
 ### 3. Bluetooth Reconnection Latency
-When the keyboard has been idle for several minutes, the Bluetooth radio enters a low-power sleep state. The first keypress wakes the hardware, which can introduce a small latency of ~50–100 ms. Once awake, MagicBridge processes keystrokes in under **0.1 ms**.
+When the keyboard has been idle for several minutes, the Bluetooth radio enters a low-power sleep state. The first keypress wakes the hardware, which can introduce a small latency of ~50–100 ms. Once awake, MacKeys processes keystrokes in under **0.1 ms**.
 
 ---
 
 ## 13. Uninstallation
 
 ### Portable Clean-Up
-If you extracted MagicBridge from a zip archive without running the installer:
-1. Right-click the MagicBridge tray icon and click **Quit**.
-2. If autostart was enabled, open **Settings &rarr; General** and uncheck *Start with Windows* before quitting (or delete the `MagicBridge` value in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
-3. Delete the folder where you extracted MagicBridge.
-4. (Optional) Delete your saved profiles and configuration located at `%APPDATA%\MagicBridge`.
+If you extracted MacKeys from a zip archive without running the installer:
+1. Right-click the MacKeys tray icon and click **Quit**.
+2. If autostart was enabled, open **Settings &rarr; General** and uncheck *Start with Windows* before quitting (or delete the `MacKeys` value in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
+3. Delete the folder where you extracted MacKeys.
+4. (Optional) Delete your saved profiles and configuration located at `%APPDATA%\MacKeys`.
 
 ### Automated Uninstaller
-MagicBridge can be uninstalled cleanly at any time:
+MacKeys can be uninstalled cleanly at any time:
 1. **Via Windows Settings / Control Panel:**
-   Open Windows **Settings &rarr; Apps &rarr; Installed apps**, find **MagicBridge (Apple Magic Keyboard for Windows)**, and click **Uninstall**.
+   Open Windows **Settings &rarr; Apps &rarr; Installed apps**, find **MacKeys (Apple Magic Keyboard for Windows)**, and click **Uninstall**.
 2. **Via PowerShell Script:**
    Open PowerShell and run:
    ```powershell
@@ -379,8 +379,8 @@ MagicBridge can be uninstalled cleanly at any time:
    ```powershell
    .\uninstall.ps1 -Silent -PurgeData
    ```
-The uninstaller terminates running processes, removes the autostart registry entry, cleans Start Menu and Desktop shortcuts, removes the Windows Add/Remove Programs registry entry, and removes application binaries. User profiles and settings in `%APPDATA%\MagicBridge` can be preserved or purged.
+The uninstaller terminates running processes, removes the autostart registry entry, cleans Start Menu and Desktop shortcuts, removes the Windows Add/Remove Programs registry entry, and removes application binaries. User profiles and settings in `%APPDATA%\MacKeys` can be preserved or purged.
 
 ---
 
-*MagicBridge is free and open-source software licensed under the MIT License.*
+*MacKeys is free and open-source software licensed under the MIT License.*

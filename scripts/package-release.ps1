@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-    Packages MagicBridge into a portable release ZIP archive for Windows x64.
+    Packages MacKeys into a portable release ZIP archive for Windows x64.
 
 .DESCRIPTION
-    Builds the MagicBridge Cargo workspace in release mode, validates that all
+    Builds the MacKeys Cargo workspace in release mode, validates that all
     required binary and resource artifacts exist, stages them into a clean bundle
-    (including setup-wizard.ps1, setup.cmd, install.ps1, uninstall.ps1, and locales),
+    (including setup installers, portable folder, and locales),
     creates a portable zip archive in the output directory (default: dist/), and
-    optionally compiles an Inno Setup installer executable if Inno Setup is detected.
+    generates checksums and distribution manifests.
 
 .PARAMETER Version
     The release version string (e.g. "0.1.0"). If omitted, the version is
@@ -41,7 +41,7 @@ $RepoRoot = Resolve-Path (Join-Path $ScriptDir "..")
 Set-Location $RepoRoot
 
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "       MagicBridge Release Packaging Tool         " -ForegroundColor Cyan
+Write-Host "         MacKeys Release Packaging Tool           " -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "Repository root: $RepoRoot"
 
@@ -67,7 +67,7 @@ if (-not $Version) {
         }
     }
     if (-not $Version) {
-        $Version = "0.1.0"
+        $Version = "0.4.1"
         Write-Host "Defaulting version to: v$Version" -ForegroundColor Yellow
     }
 }
@@ -87,7 +87,10 @@ if (-not $SkipBuild) {
 
 # 2. Verify release binaries exist
 Write-Host "`n[2/5] Verifying release binaries and assets..." -ForegroundColor Cyan
-$UnifiedExe = Join-Path $RepoRoot "target\release\magicbridge.exe"
+$UnifiedExe = Join-Path $RepoRoot "target\release\mackeys.exe"
+if (-not (Test-Path $UnifiedExe)) {
+    $UnifiedExe = Join-Path $RepoRoot "target\release\magicbridge.exe"
+}
 $AgentExe = Join-Path $RepoRoot "target\release\magicbridge-agent.exe"
 $LocalesSrc = Join-Path $RepoRoot "crates\settings\locales"
 $ReadmeSrc = Join-Path $RepoRoot "README.md"
@@ -131,7 +134,7 @@ if (-not (Test-Path $LatestDir)) {
     New-Item -ItemType Directory -Path $LatestDir -Force | Out-Null
 }
 
-$ArchiveBaseName = "MagicBridge-v$Version-portable"
+$ArchiveBaseName = "MacKeys-v$Version-portable"
 $PortableStagingDir = Join-Path $VersionDir "portable"
 if (Test-Path $PortableStagingDir) {
     Remove-Item -Path $PortableStagingDir -Recurse -Force
@@ -139,7 +142,7 @@ if (Test-Path $PortableStagingDir) {
 New-Item -ItemType Directory -Path $PortableStagingDir -Force | Out-Null
 
 # Stage the unified binary for portable folder
-Copy-Item -Path $UnifiedExe -Destination (Join-Path $PortableStagingDir "magicbridge.exe") -Force
+Copy-Item -Path $UnifiedExe -Destination (Join-Path $PortableStagingDir "mackeys.exe") -Force
 
 # Copy locales
 $StagingLocales = Join-Path $PortableStagingDir "locales"
@@ -155,8 +158,8 @@ if (Test-Path $UserGuideSrc) {
 }
 
 # Copy standalone setup executables into version directory
-$SetupExeName = "MagicBridge-Setup.exe"
-$VersionedSetupExeName = "MagicBridge-v$Version-Setup.exe"
+$SetupExeName = "MacKeys-Setup.exe"
+$VersionedSetupExeName = "MacKeys-v$Version-Setup.exe"
 Copy-Item -Path $UnifiedExe -Destination (Join-Path $VersionDir $SetupExeName) -Force
 Copy-Item -Path $UnifiedExe -Destination (Join-Path $VersionDir $VersionedSetupExeName) -Force
 Write-Host "  - Created versioned release folder: $VersionDir" -ForegroundColor Green

@@ -1,6 +1,6 @@
 [package]
 name = "magicbridge-core"
-description = "Pure MagicBridge logic: key model, mapping engine, config schema. No Win32."
+description = "Pure MacKeys logic: key model, mapping engine, config schema. No Win32."
 version.workspace = true
 edition.workspace = true
 license.workspace = true

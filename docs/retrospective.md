@@ -1,4 +1,4 @@
-# MagicBridge — Retrospective (M0 → v0.4.1)
+# MacKeys — Retrospective (M0 → v0.4.1)
 
 > Date: 2026-11-01 · Scope: 45+ commits, milestones M0–M19, releases v0.1.0 through v0.4.1,
 > multi-session interactive lead orchestrations + worker subagent parallelizations.
@@ -78,7 +78,7 @@
 
 ## 6. Open Follow-ups & Next Milestones
 
-1. **Physical A1843 Validation:** User testing of `dist\v0.4.1\portable\magicbridge.exe` and `MagicBridge-Setup.exe` with physical A1843 keyboard over USB and Bluetooth.
+1. **Physical A1843 Validation:** User testing of `dist\v0.4.1\portable\mackeys.exe` and `MacKeys-Setup.exe` with physical A1843 keyboard over USB and Bluetooth.
 2. **M20 — Visual Polish & Readability (v0.5.0):**
    - Application icon for `.exe`, title bar, and system tray (#39).
    - Key Editor side-panel ergonomics (#38).

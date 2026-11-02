@@ -763,7 +763,7 @@ pub fn export_qa_report(state: &HardwareQaViewState, i18n: &I18n) -> Result<Path
         .filter(|p| p.is_dir())
         .or_else(|| {
             std::env::var("APPDATA")
-                .map(|p| PathBuf::from(p).join("MagicBridge"))
+                .map(|p| PathBuf::from(p).join("MacKeys"))
                 .ok()
         })
         .unwrap_or_else(|| PathBuf::from("."));

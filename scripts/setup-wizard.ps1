@@ -1,18 +1,18 @@
 <#
 .SYNOPSIS
-    Guided Windows Setup Wizard for MagicBridge.
+    Guided Windows Setup Wizard for MacKeys.
 
 .DESCRIPTION
     Provides a zero-elevation graphical (Windows Forms) and interactive wizard to install
-    MagicBridge into %LOCALAPPDATA%\Programs\MagicBridge, configure Start Menu and Desktop
+    MacKeys into %LOCALAPPDATA%\Programs\MacKeys, configure Start Menu and Desktop
     shortcuts, set up logon autostart, register Windows Add/Remove Programs entry,
     and launch initial setup / settings.
 
 .PARAMETER TargetDir
-    Installation directory. Defaults to "$env:LOCALAPPDATA\Programs\MagicBridge".
+    Installation directory. Defaults to "$env:LOCALAPPDATA\Programs\MacKeys".
 
 .PARAMETER CreateDesktopShortcut
-    Creates a desktop shortcut to MagicBridge Settings. Default is on.
+    Creates a desktop shortcut to MacKeys Settings. Default is on.
 
 .PARAMETER NoDesktopShortcut
     Disables creating the desktop shortcut.
@@ -24,16 +24,16 @@
     Disables creating Start Menu shortcuts.
 
 .PARAMETER EnableAutostart
-    Registers MagicBridge to launch automatically on Windows login (HKCU). Default is on.
+    Registers MacKeys to launch automatically on Windows login (HKCU). Default is on.
 
 .PARAMETER NoAutostart
     Disables autostart on Windows login.
 
 .PARAMETER LaunchSettingsOnFinish
-    Launches MagicBridge Settings upon installation completion. Default is on.
+    Launches MacKeys Settings upon installation completion. Default is on.
 
 .PARAMETER NoLaunch
-    Prevents launching MagicBridge Settings/Agent upon completion.
+    Prevents launching MacKeys Settings/Agent upon completion.
 
 .PARAMETER Silent
     Runs the installation unattended with no GUI or prompts using provided parameters.
@@ -45,12 +45,12 @@
     .\setup-wizard.ps1
     .\setup-wizard.ps1 -Silent -NoLaunch
     .\setup-wizard.ps1 -NoGui
-    .\setup-wizard.ps1 -TargetDir "C:\Custom\MagicBridge" -NoAutostart
+    .\setup-wizard.ps1 -TargetDir "C:\Custom\MacKeys" -NoAutostart
 #>
 
 [CmdletBinding()]
 param (
-    [string]$TargetDir = "$env:LOCALAPPDATA\Programs\MagicBridge",
+    [string]$TargetDir = "$env:LOCALAPPDATA\Programs\MacKeys",
     [switch]$CreateDesktopShortcut,
     [switch]$NoDesktopShortcut,
     [switch]$CreateStartMenuShortcut,
@@ -118,7 +118,7 @@ if ($Version -eq "0.2.1") {
 # -----------------------------------------------------------------------------
 # 2. Core Installation Worker Function
 # -----------------------------------------------------------------------------
-function Install-MagicBridgePackage {
+function Install-MacKeysPackage {
     param (
         [string]$DestinationDir,
         [bool]$AddDesktopShortcut,
@@ -135,7 +135,7 @@ function Install-MagicBridgePackage {
         }
     }
 
-    Report-Status "Stopping any running MagicBridge processes..." 10
+    Report-Status "Stopping any running MacKeys processes..." 10
     Get-Process -Name "magicbridge-agent", "magicbridge-settings" -ErrorAction SilentlyContinue | ForEach-Object {
         try {
             Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
@@ -195,20 +195,20 @@ function Install-MagicBridgePackage {
     $WshShell = New-Object -ComObject WScript.Shell
 
     if ($AddStartMenuShortcut) {
-        $StartMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\MagicBridge"
+        $StartMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\MacKeys"
         if (-not (Test-Path $StartMenuDir)) {
             New-Item -ItemType Directory -Path $StartMenuDir -Force | Out-Null
         }
 
         # Settings shortcut
-        $s1 = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MagicBridge Settings.lnk"))
+        $s1 = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MacKeys Settings.lnk"))
         $s1.TargetPath = Join-Path $DestinationDir "magicbridge-settings.exe"
         $s1.WorkingDirectory = $DestinationDir
         $s1.Description = "Configure Apple Magic Keyboard mappings and profiles."
         $s1.Save()
 
         # Agent shortcut
-        $s2 = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MagicBridge Agent.lnk"))
+        $s2 = $WshShell.CreateShortcut((Join-Path $StartMenuDir "MacKeys Agent.lnk"))
         $s2.TargetPath = Join-Path $DestinationDir "magicbridge-agent.exe"
         $s2.WorkingDirectory = $DestinationDir
         $s2.Description = "Background keyboard remap hook and battery monitor."
@@ -218,10 +218,10 @@ function Install-MagicBridgePackage {
     if ($AddDesktopShortcut) {
         $DesktopDir = [Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)
         if (Test-Path $DesktopDir) {
-            $sDesk = $WshShell.CreateShortcut((Join-Path $DesktopDir "MagicBridge Settings.lnk"))
+            $sDesk = $WshShell.CreateShortcut((Join-Path $DesktopDir "MacKeys Settings.lnk"))
             $sDesk.TargetPath = Join-Path $DestinationDir "magicbridge-settings.exe"
             $sDesk.WorkingDirectory = $DestinationDir
-            $sDesk.Description = "MagicBridge - Apple Magic Keyboard for Windows."
+            $sDesk.Description = "MacKeys - Apple Magic Keyboard for Windows."
             $sDesk.Save()
         }
     }
@@ -230,15 +230,15 @@ function Install-MagicBridgePackage {
     $RunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
     if ($SetAutostart) {
         $AgentBinaryPath = "`"$DestinationDir\magicbridge-agent.exe`""
-        Set-ItemProperty -Path $RunKey -Name "MagicBridge" -Value $AgentBinaryPath
+        Set-ItemProperty -Path $RunKey -Name "MacKeys" -Value $AgentBinaryPath
     } else {
         try {
-            Remove-ItemProperty -Path $RunKey -Name "MagicBridge" -ErrorAction SilentlyContinue
+            Remove-ItemProperty -Path $RunKey -Name "MacKeys" -ErrorAction SilentlyContinue
         } catch {}
     }
 
     Report-Status "Registering Windows Add/Remove Programs entry..." 95
-    $UninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MagicBridge"
+    $UninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys"
     if (-not (Test-Path $UninstallKey)) {
         New-Item -Path $UninstallKey -Force | Out-Null
     }
@@ -246,31 +246,31 @@ function Install-MagicBridgePackage {
     $TotalBytes = (Get-ChildItem -Path $DestinationDir -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
     $EstimatedKB = [int][math]::Round(($TotalBytes / 1KB))
 
-    Set-ItemProperty -Path $UninstallKey -Name "DisplayName" -Value "MagicBridge (Apple Magic Keyboard for Windows)"
+    Set-ItemProperty -Path $UninstallKey -Name "DisplayName" -Value "MacKeys (Apple Magic Keyboard for Windows)"
     Set-ItemProperty -Path $UninstallKey -Name "DisplayVersion" -Value $Version
-    Set-ItemProperty -Path $UninstallKey -Name "Publisher" -Value "MagicBridge Contributors"
+    Set-ItemProperty -Path $UninstallKey -Name "Publisher" -Value "MacKeys Contributors"
     Set-ItemProperty -Path $UninstallKey -Name "InstallLocation" -Value $DestinationDir
     Set-ItemProperty -Path $UninstallKey -Name "DisplayIcon" -Value "$DestinationDir\magicbridge-agent.exe,0"
     Set-ItemProperty -Path $UninstallKey -Name "UninstallString" -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$DestinationDir\uninstall.ps1`""
     Set-ItemProperty -Path $UninstallKey -Name "QuietUninstallString" -Value "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$DestinationDir\uninstall.ps1`" -Silent"
     Set-ItemProperty -Path $UninstallKey -Name "InstallDate" -Value ((Get-Date).ToString("yyyyMMdd"))
     Set-ItemProperty -Path $UninstallKey -Name "EstimatedSize" -Value $EstimatedKB -Type DWord
-    Set-ItemProperty -Path $UninstallKey -Name "URLInfoAbout" -Value "https://github.com/DooperDrew/magicbridge"
-    Set-ItemProperty -Path $UninstallKey -Name "HelpLink" -Value "https://github.com/DooperDrew/magicbridge/issues"
-    Set-ItemProperty -Path $UninstallKey -Name "URLUpdateInfo" -Value "https://github.com/DooperDrew/magicbridge/releases"
+    Set-ItemProperty -Path $UninstallKey -Name "URLInfoAbout" -Value "https://github.com/DooperDrew/mackeys-win"
+    Set-ItemProperty -Path $UninstallKey -Name "HelpLink" -Value "https://github.com/DooperDrew/mackeys-win/issues"
+    Set-ItemProperty -Path $UninstallKey -Name "URLUpdateInfo" -Value "https://github.com/DooperDrew/mackeys-win/releases"
     Set-ItemProperty -Path $UninstallKey -Name "NoModify" -Value 1 -Type DWord
     Set-ItemProperty -Path $UninstallKey -Name "NoRepair" -Value 1 -Type DWord
 
-    Report-Status "MagicBridge installation complete!" 100
+    Report-Status "MacKeys installation complete!" 100
 }
 
 # -----------------------------------------------------------------------------
 # 3. Execution: Silent Mode
 # -----------------------------------------------------------------------------
 if ($Silent) {
-    Write-Host "MagicBridge Silent Setup starting..." -ForegroundColor Cyan
+    Write-Host "MacKeys Silent Setup starting..." -ForegroundColor Cyan
     Write-Host "Target Directory: $TargetDir"
-    Install-MagicBridgePackage `
+    Install-MacKeysPackage `
         -DestinationDir $TargetDir `
         -AddDesktopShortcut:$ResolvedDesktopShortcut `
         -AddStartMenuShortcut:$ResolvedStartMenuShortcut `
@@ -281,11 +281,11 @@ if ($Silent) {
         }
 
     if ($ResolvedLaunchOnFinish) {
-        Write-Host "Launching MagicBridge background agent..." -ForegroundColor Cyan
+        Write-Host "Launching MacKeys background agent..." -ForegroundColor Cyan
         Start-Process -FilePath (Join-Path $TargetDir "magicbridge-agent.exe") -WorkingDirectory $TargetDir
         $SettingsExe = Join-Path $TargetDir "magicbridge-settings.exe"
         if (Test-Path $SettingsExe) {
-            Write-Host "Launching MagicBridge settings..." -ForegroundColor Cyan
+            Write-Host "Launching MacKeys settings..." -ForegroundColor Cyan
             Start-Process -FilePath $SettingsExe -WorkingDirectory $TargetDir
         }
     }
@@ -298,7 +298,7 @@ if ($Silent) {
 # -----------------------------------------------------------------------------
 if ($NoGui) {
     Write-Host "==================================================" -ForegroundColor Cyan
-    Write-Host "         MagicBridge Guided Setup (Console)       " -ForegroundColor Cyan
+    Write-Host "         MacKeys Guided Setup (Console)       " -ForegroundColor Cyan
     Write-Host "==================================================" -ForegroundColor Cyan
     Write-Host "Version: v$Version"
     Write-Host "Source:  $SourceDir`n"
@@ -314,14 +314,14 @@ if ($NoGui) {
     $ansDesktop = Read-Host "Create Desktop shortcut for Settings? (Y/n)"
     $ResolvedDesktopShortcut = ($ansDesktop -notmatch "^[nN]")
 
-    $ansAutostart = Read-Host "Start MagicBridge automatically on Windows logon? (Y/n)"
+    $ansAutostart = Read-Host "Start MacKeys automatically on Windows logon? (Y/n)"
     $ResolvedAutostart = ($ansAutostart -notmatch "^[nN]")
 
-    $ansLaunch = Read-Host "Launch MagicBridge Settings immediately upon completion? (Y/n)"
+    $ansLaunch = Read-Host "Launch MacKeys Settings immediately upon completion? (Y/n)"
     $ResolvedLaunchOnFinish = ($ansLaunch -notmatch "^[nN]")
 
     Write-Host "`nStarting installation..." -ForegroundColor Cyan
-    Install-MagicBridgePackage `
+    Install-MacKeysPackage `
         -DestinationDir $TargetDir `
         -AddDesktopShortcut:$ResolvedDesktopShortcut `
         -AddStartMenuShortcut:$ResolvedStartMenuShortcut `
@@ -340,7 +340,7 @@ if ($NoGui) {
     }
 
     Write-Host "`nInstallation completed successfully." -ForegroundColor Green
-    Write-Host "MagicBridge is now ready to use at: $TargetDir`n"
+    Write-Host "MacKeys is now ready to use at: $TargetDir`n"
     return
 }
 
@@ -352,7 +352,7 @@ Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "MagicBridge Setup Wizard"
+$form.Text = "MacKeys Setup Wizard"
 $form.ClientSize = New-Object System.Drawing.Size(580, 440)
 $form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
 $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
@@ -369,7 +369,7 @@ $pnlHeader.BackColor = [System.Drawing.Color]::FromArgb(26, 30, 38)
 $form.Controls.Add($pnlHeader)
 
 $lblTitle = New-Object System.Windows.Forms.Label
-$lblTitle.Text = "MagicBridge Setup"
+$lblTitle.Text = "MacKeys Setup"
 $lblTitle.Font = New-Object System.Drawing.Font("Segoe UI", 14, [System.Drawing.FontStyle]::Bold)
 $lblTitle.ForeColor = [System.Drawing.Color]::White
 $lblTitle.Location = New-Object System.Drawing.Point(22, 12)
@@ -434,7 +434,7 @@ $pnlWelcome.BackColor = [System.Drawing.Color]::White
 $form.Controls.Add($pnlWelcome)
 
 $lblWelcomeHeading = New-Object System.Windows.Forms.Label
-$lblWelcomeHeading.Text = "Welcome to the MagicBridge Setup Wizard"
+$lblWelcomeHeading.Text = "Welcome to the MacKeys Setup Wizard"
 $lblWelcomeHeading.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $lblWelcomeHeading.ForeColor = [System.Drawing.Color]::FromArgb(30, 30, 30)
 $lblWelcomeHeading.Location = New-Object System.Drawing.Point(25, 20)
@@ -443,9 +443,9 @@ $pnlWelcome.Controls.Add($lblWelcomeHeading)
 
 $lblWelcomeBody = New-Object System.Windows.Forms.Label
 $lblWelcomeBody.Text = @"
-This wizard will guide you through setting up MagicBridge on your computer.
+This wizard will guide you through setting up MacKeys on your computer.
 
-MagicBridge seamlessly unlocks first-class Windows 10 & 11 integration for the Apple Magic Keyboard with Numeric Keypad (Model A1843):
+MacKeys seamlessly unlocks first-class Windows 10 & 11 integration for the Apple Magic Keyboard with Numeric Keypad (Model A1843):
 
   • Configurable Fn Layer: Media controls, navigation combos, and F-keys switching
   • Modifier Presets: Switch between Mac (Cmd=Win, Opt=Alt) and Windows layouts
@@ -478,7 +478,7 @@ $grpDest.Size = New-Object System.Drawing.Size(530, 80)
 $pnlOptions.Controls.Add($grpDest)
 
 $lblDestPrompt = New-Object System.Windows.Forms.Label
-$lblDestPrompt.Text = "Install MagicBridge into the following directory:"
+$lblDestPrompt.Text = "Install MacKeys into the following directory:"
 $lblDestPrompt.Location = New-Object System.Drawing.Point(15, 20)
 $lblDestPrompt.AutoSize = $true
 $grpDest.Controls.Add($lblDestPrompt)
@@ -495,7 +495,7 @@ $btnBrowse.Location = New-Object System.Drawing.Point(433, 40)
 $btnBrowse.Size = New-Object System.Drawing.Size(82, 26)
 $btnBrowse.Add_Click({
     $dlg = New-Object System.Windows.Forms.FolderBrowserDialog
-    $dlg.Description = "Select MagicBridge Installation Folder"
+    $dlg.Description = "Select MacKeys Installation Folder"
     $dlg.SelectedPath = $txtTargetDir.Text
     if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
         $txtTargetDir.Text = $dlg.SelectedPath
@@ -511,21 +511,21 @@ $grpOpts.Size = New-Object System.Drawing.Size(530, 200)
 $pnlOptions.Controls.Add($grpOpts)
 
 $chkStartMenu = New-Object System.Windows.Forms.CheckBox
-$chkStartMenu.Text = "Create Start Menu shortcuts (MagicBridge Settings & Agent)"
+$chkStartMenu.Text = "Create Start Menu shortcuts (MacKeys Settings & Agent)"
 $chkStartMenu.Location = New-Object System.Drawing.Point(15, 25)
 $chkStartMenu.Size = New-Object System.Drawing.Size(500, 24)
 $chkStartMenu.Checked = $ResolvedStartMenuShortcut
 $grpOpts.Controls.Add($chkStartMenu)
 
 $chkDesktop = New-Object System.Windows.Forms.CheckBox
-$chkDesktop.Text = "Create Desktop shortcut for MagicBridge Settings"
+$chkDesktop.Text = "Create Desktop shortcut for MacKeys Settings"
 $chkDesktop.Location = New-Object System.Drawing.Point(15, 55)
 $chkDesktop.Size = New-Object System.Drawing.Size(500, 24)
 $chkDesktop.Checked = $ResolvedDesktopShortcut
 $grpOpts.Controls.Add($chkDesktop)
 
 $chkAutostart = New-Object System.Windows.Forms.CheckBox
-$chkAutostart.Text = "Start MagicBridge automatically at Windows sign-in (recommended)"
+$chkAutostart.Text = "Start MacKeys automatically at Windows sign-in (recommended)"
 $chkAutostart.Location = New-Object System.Drawing.Point(15, 85)
 $chkAutostart.Size = New-Object System.Drawing.Size(500, 24)
 $chkAutostart.Checked = $ResolvedAutostart
@@ -539,7 +539,7 @@ $chkLaunchWizard.Checked = $ResolvedLaunchOnFinish
 $grpOpts.Controls.Add($chkLaunchWizard)
 
 $lblNote = New-Object System.Windows.Forms.Label
-$lblNote.Text = "Note: MagicBridge installs cleanly without UAC prompts or Administrator elevation.`nSettings and custom keymaps are preserved in %APPDATA%\MagicBridge."
+$lblNote.Text = "Note: MacKeys installs cleanly without UAC prompts or Administrator elevation.`nSettings and custom keymaps are preserved in %APPDATA%\MacKeys."
 $lblNote.Font = New-Object System.Drawing.Font("Segoe UI", 8.25)
 $lblNote.ForeColor = [System.Drawing.Color]::Gray
 $lblNote.Location = New-Object System.Drawing.Point(15, 152)
@@ -555,7 +555,7 @@ $pnlProgress.Visible = $false
 $form.Controls.Add($pnlProgress)
 
 $lblProgTitle = New-Object System.Windows.Forms.Label
-$lblProgTitle.Text = "Installing MagicBridge..."
+$lblProgTitle.Text = "Installing MacKeys..."
 $lblProgTitle.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $lblProgTitle.Location = New-Object System.Drawing.Point(25, 18)
 $lblProgTitle.AutoSize = $true
@@ -592,7 +592,7 @@ $pnlFinished.Visible = $false
 $form.Controls.Add($pnlFinished)
 
 $lblFinTitle = New-Object System.Windows.Forms.Label
-$lblFinTitle.Text = "MagicBridge Setup Completed!"
+$lblFinTitle.Text = "MacKeys Setup Completed!"
 $lblFinTitle.Font = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
 $lblFinTitle.ForeColor = [System.Drawing.Color]::FromArgb(0, 120, 212)
 $lblFinTitle.Location = New-Object System.Drawing.Point(25, 20)
@@ -607,7 +607,7 @@ $lblFinBody.Size = New-Object System.Drawing.Size(530, 140)
 $pnlFinished.Controls.Add($lblFinBody)
 
 $chkLaunchNow = New-Object System.Windows.Forms.CheckBox
-$chkLaunchNow.Text = "Launch MagicBridge Settings now"
+$chkLaunchNow.Text = "Launch MacKeys Settings now"
 $chkLaunchNow.Location = New-Object System.Drawing.Point(25, 215)
 $chkLaunchNow.Size = New-Object System.Drawing.Size(450, 24)
 $chkLaunchNow.Checked = $ResolvedLaunchOnFinish
@@ -648,13 +648,13 @@ function Show-Step([int]$step) {
         $btnCancel.FlatAppearance.BorderSize = 0
 
         $lblFinBody.Text = @"
-MagicBridge has been successfully installed on your computer.
+MacKeys has been successfully installed on your computer.
 
 The background keyboard hook daemon and settings application are configured and ready.
 
 Installation Details:
  • Installed to: $($txtTargetDir.Text)
- • Configuration directory: %APPDATA%\MagicBridge
+ • Configuration directory: %APPDATA%\MacKeys
  • Registered in Windows Add/Remove Programs
 
 Click Finish to complete the setup.
@@ -671,7 +671,7 @@ $btnNext.Add_Click({
             [System.Windows.Forms.MessageBox]::Show(
                 $form,
                 "Please specify a valid installation directory.",
-                "MagicBridge Setup",
+                "MacKeys Setup",
                 [System.Windows.Forms.MessageBoxButtons]::OK,
                 [System.Windows.Forms.MessageBoxIcon]::Warning
             ) | Out-Null
@@ -691,7 +691,7 @@ $btnNext.Add_Click({
         }
 
         try {
-            Install-MagicBridgePackage `
+            Install-MacKeysPackage `
                 -DestinationDir $chosenDir `
                 -AddDesktopShortcut:$chkDesktop.Checked `
                 -AddStartMenuShortcut:$chkStartMenu.Checked `
@@ -741,7 +741,7 @@ $btnCancel.Add_Click({
     } else {
         $res = [System.Windows.Forms.MessageBox]::Show(
             $form,
-            "Are you sure you want to cancel MagicBridge Setup?",
+            "Are you sure you want to cancel MacKeys Setup?",
             "Exit Setup",
             [System.Windows.Forms.MessageBoxButtons]::YesNo,
             [System.Windows.Forms.MessageBoxIcon]::Question

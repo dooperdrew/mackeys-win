@@ -1,4 +1,4 @@
-//! Main eframe application shell for MagicBridge settings GUI.
+//! Main eframe application shell for MacKeys settings GUI.
 //!
 //! Complies with F7.1, F7.5, NFR-P5, and docs/04-ux.md.
 
@@ -46,7 +46,7 @@ pub enum SettingsTab {
 }
 
 /// The main settings application state.
-pub struct MagicBridgeApp {
+pub struct MacKeysApp {
     pub current_tab: SettingsTab,
     pub config: Config,
     pub config_path: PathBuf,
@@ -64,7 +64,7 @@ pub struct MagicBridgeApp {
     pub tab_pulse: Option<(SettingsTab, Instant)>,
 }
 
-impl MagicBridgeApp {
+impl MacKeysApp {
     /// Creates and initializes the settings application state.
     #[must_use]
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
@@ -123,7 +123,7 @@ impl MagicBridgeApp {
     }
 }
 
-impl App for MagicBridgeApp {
+impl App for MacKeysApp {
     fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
         // Sync visual keyboard model with configuration model
         if self.keyboard_state.model.model_id != self.config.keyboard_model {
@@ -430,7 +430,7 @@ impl App for MagicBridgeApp {
     }
 }
 
-impl Drop for MagicBridgeApp {
+impl Drop for MacKeysApp {
     fn drop(&mut self) {
         if self.qa_state.was_paused_by_qa {
             let ipc = crate::ipc::SettingsIpc::new();

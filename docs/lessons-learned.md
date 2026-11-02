@@ -20,7 +20,7 @@ Living log of things that went wrong or surprisingly right, and the rule they pr
 | 2026-10-25 | M11 | GitHub Copilot without permanent instructions could violate hook budgets and Sole Committer rule | Author `.github/copilot-instructions.md` and `agent_task.yml` | [KIT ✓] |
 | 2026-10-25 | distribution | Download & install options were built but absent from homepage/README | Document all distribution channels (WinGet, Scoop, Wizard, Portable) prominently in README | [KIT ✓] |
 | 2026-10-25 | PowerShell | External CLI stdout capture (`gh`, `git`) on Windows corrupted non-ASCII characters | Set `[Console]::OutputEncoding = UTF8` and force UTF-8 without BOM | [KIT ✓] |
-| 2026-10-31 | packaging | Releasing multiple executables in the distribution bundle confused users | Single standalone setup executable (`MagicBridge-Setup.exe`) and single-binary portable zip | [KIT ✓] |
+| 2026-10-31 | packaging | Releasing multiple executables in the distribution bundle confused users | Single standalone setup executable (`MacKeys-Setup.exe`) and single-binary portable zip | [KIT ✓] |
 | 2026-10-31 | UX & Wizard | Flat options list felt unpolished and running the binary intercepted direct Settings access | 5-step progressive Windows Setup Wizard with masked advanced options, uninstaller, and direct settings access | project |
 
 | 2026-11-01 | field test | Milestones M15–M18 marked complete although the Magic Mouse engine was never wired to input and toasts/WinGet claims were overstated | A roadmap item is "done" only when an end-to-end call path from real input/OS event exists — unit-tested library code alone is "engine ready", not "integrated" | generic |

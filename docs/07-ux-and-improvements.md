@@ -1,6 +1,6 @@
 # 07 — UX Improvements & Product Evolution Backlog
 
-This document outlines the design and technical specifications for MagicBridge user experience enhancements, including the **Installation Wizard**, **Initial Configuration Wizard**, **Responsive Settings Layout**, and feature backlog.
+This document outlines the design and technical specifications for MacKeys user experience enhancements, including the **Installation Wizard**, **Initial Configuration Wizard**, **Responsive Settings Layout**, and feature backlog.
 
 ---
 
@@ -11,7 +11,7 @@ Replace manual script execution with a seamless, user-friendly guided installati
 
 ```mermaid
 flowchart LR
-    WIZ1["1. Welcome Screen<br/>• Overview & License agreement"] --> WIZ2["2. Install Destination<br/>• Default: %LOCALAPPDATA%\\MagicBridge"]
+    WIZ1["1. Welcome Screen<br/>• Overview & License agreement"] --> WIZ2["2. Install Destination<br/>• Default: %LOCALAPPDATA%\\MacKeys"]
     WIZ2 --> WIZ3["3. Options Selection<br/>• Create Desktop shortcut<br/>• Create Start Menu entry<br/>• Enable Start on Boot"]
     WIZ3 --> WIZ4["4. Extraction & Register<br/>• Copy binaries & locales<br/>• Register in Windows Apps"]
     WIZ4 --> WIZ5["5. Completion<br/>• Launch Initial Setup Wizard"]
@@ -19,14 +19,14 @@ flowchart LR
 
 ### Technical Specification:
 - **Packaging Target:** Windows standard installer (.exe / .msi) generated via **Inno Setup** or native lightweight Rust installer executable (`magicbridge-setup.exe`).
-- **Zero Administrator Elevation Required:** Installs cleanly into `%LOCALAPPDATA%\Programs\MagicBridge` without triggering UAC elevation prompts (satisfies enterprise security and portable operation).
-- **Control Panel Integration:** Writes registry entries to `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MagicBridge` with:
-  - DisplayName: "MagicBridge (Apple Magic Keyboard for Windows)"
+- **Zero Administrator Elevation Required:** Installs cleanly into `%LOCALAPPDATA%\Programs\MacKeys` without triggering UAC elevation prompts (satisfies enterprise security and portable operation).
+- **Control Panel Integration:** Writes registry entries to `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys` with:
+  - DisplayName: "MacKeys (Apple Magic Keyboard for Windows)"
   - DisplayVersion: "0.2.1"
-  - Publisher: "MagicBridge Contributors"
+  - Publisher: "MacKeys Contributors"
   - UninstallString: `uninstall.exe` or `powershell.exe -ExecutionPolicy Bypass -File uninstall.ps1`
   - DisplayIcon: `magicbridge-agent.exe,0`
-- **Clean Uninstallation:** Completely terminates running background agent instances, removes autostart entries from `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, cleans binary directories, and optionally asks whether to preserve user configuration in `%APPDATA%\MagicBridge`.
+- **Clean Uninstallation:** Completely terminates running background agent instances, removes autostart entries from `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, cleans binary directories, and optionally asks whether to preserve user configuration in `%APPDATA%\MacKeys`.
 
 ---
 
@@ -68,7 +68,7 @@ stateDiagram-v2
      - `Right Control`
      - `Caps Lock`
 5. **Screen 5: System Preferences & Autostart**
-   - Toggle: "Start MagicBridge automatically when I log into Windows".
+   - Toggle: "Start MacKeys automatically when I log into Windows".
    - Toggle: "Top Row keys default to Media controls (Play/Pause, Volume, Brightness)".
 6. **Screen 6: Interactive Test Box & Completion**
    - An interactive text area allowing the user to press modifiers and test character output immediately.

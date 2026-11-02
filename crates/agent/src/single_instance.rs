@@ -8,7 +8,7 @@ use windows::Win32::System::Threading::CreateMutexW;
 use windows::core::{PCWSTR, w};
 
 /// Default name for the daemon's single-instance mutex.
-pub const DEFAULT_MUTEX_NAME: PCWSTR = w!(r"Local\MagicBridge_SingleInstance_Mutex");
+pub const DEFAULT_MUTEX_NAME: PCWSTR = w!(r"Local\MacKeys_SingleInstance_Mutex");
 
 /// Error occurred while acquiring the single-instance guard.
 #[derive(Debug, PartialEq, Eq)]
@@ -23,7 +23,7 @@ impl fmt::Display for SingleInstanceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::AlreadyRunning => {
-                write!(f, "Another instance of MagicBridge is already running")
+                write!(f, "Another instance of MacKeys is already running")
             }
             Self::WindowsError(code) => {
                 write!(
@@ -99,7 +99,7 @@ mod tests {
     #[test]
     fn single_instance_acquire_and_conflict() {
         let unique_name = format!(
-            r"Local\MagicBridge_Test_Mutex_{}_{}",
+            r"Local\MacKeys_Test_Mutex_{}_{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

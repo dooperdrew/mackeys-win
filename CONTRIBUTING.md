@@ -1,12 +1,12 @@
-# Contributing to MagicBridge
+# Contributing to MacKeys
 
-Thank you for your interest in contributing to **MagicBridge**! This document explains our principles, architectural constraints, development workflow, and coding guidelines.
+Thank you for your interest in contributing to **MacKeys**! This document explains our principles, architectural constraints, development workflow, and coding guidelines.
 
 ---
 
 ## 1. Guiding Principles & Non-Negotiable Budgets
 
-MagicBridge runs quietly in the background on Windows. To ensure it never degrades system or gaming responsiveness, all contributions must respect these constraints:
+MacKeys runs quietly in the background on Windows. To ensure it never degrades system or gaming responsiveness, all contributions must respect these constraints:
 
 1. **Zero Idle CPU (NFR-P2):** Everything is strictly event-driven (Win32 message loops, device notifications, and named pipes). No polling loops (the only periodic task is battery checks every N minutes).
 2. **Hook Safety & Latency (NFR-P3):** The `WH_KEYBOARD_LL` low-level hook callback must remain ultra-lean:
@@ -78,7 +78,7 @@ cargo build --workspace --release
 
 ## 5. Working on Milestones & Collaborative Workflow
 
-We track our roadmap in [`docs/05-roadmap.md`](docs/05-roadmap.md) and through [GitHub Issues](https://github.com/DooperDrew/magicbridge/issues).
+We track our roadmap in [`docs/05-roadmap.md`](docs/05-roadmap.md) and through [GitHub Issues](https://github.com/DooperDrew/mackeys-win/issues).
 
 ### Branch Strategy
 - Main branch (`main`) is protected by the **Sole Committer Protocol**.

@@ -950,25 +950,50 @@ pub fn atomic_write(path: impl AsRef<Path>, contents: impl AsRef<[u8]>) -> Resul
     Ok(())
 }
 
-/// Returns the default MagicBridge configuration directory:
-/// `%APPDATA%\MagicBridge` on Windows.
+/// Returns the default MacKeys configuration directory:
+/// `%APPDATA%\MacKeys` on Windows.
+/// Seamlessly copies over configuration from legacy `%APPDATA%\MagicBridge` if present.
 pub fn default_config_dir() -> Result<PathBuf, ConfigError> {
-    if let Some(appdata) = std::env::var_os("APPDATA") {
-        Ok(PathBuf::from(appdata).join("MagicBridge"))
+    let base = if let Some(appdata) = std::env::var_os("APPDATA") {
+        PathBuf::from(appdata)
     } else if let Some(userprofile) = std::env::var_os("USERPROFILE") {
-        Ok(PathBuf::from(userprofile)
-            .join("AppData")
-            .join("Roaming")
-            .join("MagicBridge"))
+        PathBuf::from(userprofile).join("AppData").join("Roaming")
     } else if let Some(home) = std::env::var_os("HOME") {
-        Ok(PathBuf::from(home).join(".config").join("magicbridge"))
+        PathBuf::from(home).join(".config")
     } else {
-        Err(ConfigError::AppDataNotFound)
+        return Err(ConfigError::AppDataNotFound);
+    };
+
+    let new_dir =
+        if std::env::var_os("APPDATA").is_some() || std::env::var_os("USERPROFILE").is_some() {
+            base.join("MacKeys")
+        } else {
+            base.join("mackeys")
+        };
+
+    // Seamless migration from legacy MagicBridge directory if present
+    if !new_dir.exists() {
+        let legacy_dir =
+            if std::env::var_os("APPDATA").is_some() || std::env::var_os("USERPROFILE").is_some() {
+                base.join("MagicBridge")
+            } else {
+                base.join("magicbridge")
+            };
+        if legacy_dir.exists() {
+            let _ = std::fs::create_dir_all(&new_dir);
+            let legacy_config = legacy_dir.join("config.toml");
+            let new_config = new_dir.join("config.toml");
+            if legacy_config.exists() && !new_config.exists() {
+                let _ = std::fs::copy(&legacy_config, &new_config);
+            }
+        }
     }
+
+    Ok(new_dir)
 }
 
-/// Returns the default MagicBridge configuration file path:
-/// `%APPDATA%\MagicBridge\config.toml` on Windows.
+/// Returns the default MacKeys configuration file path:
+/// `%APPDATA%\MacKeys\config.toml` on Windows.
 pub fn default_config_path() -> Result<PathBuf, ConfigError> {
     default_config_dir().map(|dir| dir.join("config.toml"))
 }
@@ -1313,8 +1338,7 @@ mod tests {
         let path = default_config_path().expect("default path should resolve");
         let path_str = path.to_string_lossy();
         assert!(
-            path_str.ends_with(r"MagicBridge\config.toml")
-                || path_str.ends_with("magicbridge/config.toml")
+            path_str.ends_with(r"MacKeys\config.toml") || path_str.ends_with("mackeys/config.toml")
         );
     }
 

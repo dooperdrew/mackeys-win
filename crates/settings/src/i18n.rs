@@ -1,4 +1,4 @@
-//! Internationalization (i18n) loader and dictionary for MagicBridge settings.
+//! Internationalization (i18n) loader and dictionary for MacKeys settings.
 //!
 //! Complies with F7.3 and AGENTS.md:
 //! - All user-facing UI text is managed in external/bundled translation files.

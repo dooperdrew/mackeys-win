@@ -1,6 +1,6 @@
-﻿//! Multi-Agent Architecture and Methodology Documentation View.
+//! Multi-Agent Architecture and Methodology Documentation View.
 //!
-//! Provides an interactive educational tab explaining how MagicBridge was developed
+//! Provides an interactive educational tab explaining how MacKeys was developed
 //! using a Hub-and-Spoke multi-agent system with parallel subagents, token optimization,
 //! and the Sole Committer protocol.
 
@@ -61,7 +61,7 @@ impl ArchitectureViewState {
         ui.add_space(4.0);
         ui.label(
             RichText::new(
-                "A didactic reference explaining how MagicBridge was developed in parallel \
+                "A didactic reference explaining how MacKeys was developed in parallel \
                  using autonomous AI subagents, dynamic token tiers, and the Sole Committer protocol.",
             )
             .color(Color32::from_rgb(170, 180, 200)),
@@ -120,7 +120,7 @@ impl ArchitectureViewState {
             ui.label(
                 "When building native systems utilities with low-level Win32 hooks and strict performance budgets \
                  (0% idle CPU, <0.1ms hook latency), single-agent sessions quickly suffer from context saturation and \
-                 token exhaustion. MagicBridge solves this using an autonomous Hub-and-Spoke multi-agent architecture.",
+                 token exhaustion. MacKeys solves this using an autonomous Hub-and-Spoke multi-agent architecture.",
             );
         });
 
@@ -167,7 +167,7 @@ impl ArchitectureViewState {
             ui.add_space(4.0);
             ui.label(
                 "In traditional multi-agent systems, agents frequently overstep each other's changes or lock git repositories. \
-                 MagicBridge implements a strict hierarchy:",
+                 MacKeys implements a strict hierarchy:",
             );
             ui.add_space(6.0);
             ui.label(
@@ -273,7 +273,7 @@ impl ArchitectureViewState {
             ui.strong("Extending This Pattern for Future Tasks");
             ui.add_space(4.0);
             ui.label(
-                "When adding new features or QA improvements to MagicBridge, follow this 3-step lifecycle:",
+                "When adding new features or QA improvements to MacKeys, follow this 3-step lifecycle:",
             );
             ui.add_space(6.0);
             ui.label("1. Orthogonality Analysis: Ensure proposed tasks touch distinct files or crates.");

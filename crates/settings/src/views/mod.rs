@@ -1,4 +1,4 @@
-//! View tabs and UI components for MagicBridge settings window.
+//! View tabs and UI components for MacKeys settings window.
 
 pub mod about_view;
 pub mod architecture_view;

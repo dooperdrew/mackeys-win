@@ -1,0 +1,28 @@
+{
+    "version": "0.4.1",
+    "description": "Native, ultra-lightweight Windows utility making Apple Magic Keyboards behave as first-class Windows keyboards.",
+    "homepage": "https://github.com/DooperDrew/mackeys-win",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/DooperDrew/mackeys-win/releases/download/v0.4.1/MacKeys-v0.4.1-portable.zip"
+        }
+    },
+    "bin": [
+        "mackeys.exe"
+    ],
+    "shortcuts": [
+        [
+            "mackeys.exe",
+            "MacKeys"
+        ]
+    ],
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/DooperDrew/mackeys-win/releases/download/v$version/MacKeys-v$version-portable.zip"
+            }
+        }
+    }
+}

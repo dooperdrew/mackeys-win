@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Generates WinGet and Scoop package manifests for a given MagicBridge release.
+    Generates WinGet and Scoop package manifests for a given MacKeys release.
 
 .DESCRIPTION
     Calculates the SHA256 of the distribution zip and updates the manifest files in packaging/
@@ -10,7 +10,7 @@
     The release version (e.g. "0.2.0"). If omitted, reads from Cargo.toml.
 
 .PARAMETER ArchivePath
-    Path to the release ZIP. Defaults to dist\MagicBridge-v<Version>-windows-x64.zip.
+    Path to the release ZIP. Defaults to dist\MacKeys-v<Version>-windows-x64.zip.
 
 .EXAMPLE
     .\scripts\generate-manifests.ps1
@@ -39,11 +39,11 @@ if (-not $Version) {
 }
 if (-not $Version) { $Version = "0.2.0" }
 
-Write-Host "Generating package manifests for MagicBridge v$Version..." -ForegroundColor Cyan
+Write-Host "Generating package manifests for MacKeys v$Version..." -ForegroundColor Cyan
 
 # 2. Resolve Archive & Calculate Hash
 if (-not $ArchivePath) {
-    $ArchivePath = Join-Path $RepoRoot "dist\MagicBridge-v$Version-portable.zip"
+    $ArchivePath = Join-Path $RepoRoot "dist\MacKeys-v$Version-portable.zip"
 }
 
 if (-not (Test-Path $ArchivePath)) {
@@ -55,12 +55,12 @@ Write-Host "Archive: $ArchivePath" -ForegroundColor Gray
 Write-Host "SHA256:  $Hash" -ForegroundColor Green
 
 # 3. Output WinGet Manifests
-$WingetDir = Join-Path $RepoRoot "packaging\winget\manifests\d\DooperDrew\MagicBridge\$Version"
+$WingetDir = Join-Path $RepoRoot "packaging\winget\manifests\d\DooperDrew\MacKeys\$Version"
 New-Item -ItemType Directory -Path $WingetDir -Force | Out-Null
 
 $VersionYaml = @"
 # yaml-language-server: `$schema=https://aka.ms/winget-manifest.version.1.9.0.schema.json
-PackageIdentifier: DooperDrew.MagicBridge
+PackageIdentifier: DooperDrew.MacKeys
 PackageVersion: $Version
 DefaultLocale: en-US
 ManifestType: version
@@ -69,16 +69,16 @@ ManifestVersion: 1.9.0
 
 $InstallerYaml = @"
 # yaml-language-server: `$schema=https://aka.ms/winget-manifest.installer.1.9.0.schema.json
-PackageIdentifier: DooperDrew.MagicBridge
+PackageIdentifier: DooperDrew.MacKeys
 PackageVersion: $Version
 InstallerType: zip
 NestedInstallerType: portable
 NestedInstallerFiles:
-  - RelativeFilePath: magicbridge.exe
+  - RelativeFilePath: mackeys.exe
     PortableCommandAlias: magicbridge
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/DooperDrew/magicbridge/releases/download/v$Version/MagicBridge-v$Version-portable.zip
+    InstallerUrl: https://github.com/DooperDrew/mackeys-win/releases/download/v$Version/MacKeys-v$Version-portable.zip
     InstallerSha256: $Hash
     UpgradeBehavior: install
 ManifestType: installer
@@ -87,21 +87,21 @@ ManifestVersion: 1.9.0
 
 $LocaleYaml = @"
 # yaml-language-server: `$schema=https://aka.ms/winget-manifest.defaultLocale.1.9.0.schema.json
-PackageIdentifier: DooperDrew.MagicBridge
+PackageIdentifier: DooperDrew.MacKeys
 PackageVersion: $Version
 PackageLocale: en-US
 Publisher: DooperDrew
 PublisherUrl: https://github.com/DooperDrew
-PublisherSupportUrl: https://github.com/DooperDrew/magicbridge/issues
+PublisherSupportUrl: https://github.com/DooperDrew/mackeys-win/issues
 Author: DooperDrew
-PackageName: MagicBridge
-PackageUrl: https://github.com/DooperDrew/magicbridge
+PackageName: MacKeys
+PackageUrl: https://github.com/DooperDrew/mackeys-win
 License: MIT
-LicenseUrl: https://github.com/DooperDrew/magicbridge/blob/main/LICENSE
+LicenseUrl: https://github.com/DooperDrew/mackeys-win/blob/main/LICENSE
 Copyright: Copyright (c) 2026 DooperDrew
 ShortDescription: Native, ultra-lightweight Windows utility making Apple Magic Keyboards behave as first-class Windows keyboards.
 Description: |
-  MagicBridge is a native, ultra-lightweight Windows 10/11 x64 utility that makes the Apple Magic Keyboard
+  MacKeys is a native, ultra-lightweight Windows 10/11 x64 utility that makes the Apple Magic Keyboard
   with Numeric Keypad (model A1843) feel right at home on Windows. Features user-mode Fn layer, top-row media keys
   vs. F-keys toggling, modifier presets, direct HID battery reporting, and zero background idle CPU.
 Moniker: magicbridge
@@ -114,14 +114,14 @@ Tags:
   - battery
   - rust
   - windows11
-ReleaseNotesUrl: https://github.com/DooperDrew/magicbridge/releases/tag/v$Version
+ReleaseNotesUrl: https://github.com/DooperDrew/mackeys-win/releases/tag/v$Version
 ManifestType: defaultLocale
 ManifestVersion: 1.9.0
 "@
 
-[System.IO.File]::WriteAllText((Join-Path $WingetDir "DooperDrew.MagicBridge.yaml"), $VersionYaml, [System.Text.Encoding]::UTF8)
-[System.IO.File]::WriteAllText((Join-Path $WingetDir "DooperDrew.MagicBridge.installer.yaml"), $InstallerYaml, [System.Text.Encoding]::UTF8)
-[System.IO.File]::WriteAllText((Join-Path $WingetDir "DooperDrew.MagicBridge.locale.en-US.yaml"), $LocaleYaml, [System.Text.Encoding]::UTF8)
+[System.IO.File]::WriteAllText((Join-Path $WingetDir "DooperDrew.MacKeys.yaml"), $VersionYaml, [System.Text.Encoding]::UTF8)
+[System.IO.File]::WriteAllText((Join-Path $WingetDir "DooperDrew.MacKeys.installer.yaml"), $InstallerYaml, [System.Text.Encoding]::UTF8)
+[System.IO.File]::WriteAllText((Join-Path $WingetDir "DooperDrew.MacKeys.locale.en-US.yaml"), $LocaleYaml, [System.Text.Encoding]::UTF8)
 Write-Host "  -> WinGet manifests written to: $WingetDir" -ForegroundColor Green
 
 # 4. Output Scoop Manifest
@@ -132,35 +132,36 @@ $ScoopJson = @"
 {
     "version": "$Version",
     "description": "Native, ultra-lightweight Windows utility making Apple Magic Keyboards behave as first-class Windows keyboards.",
-    "homepage": "https://github.com/DooperDrew/magicbridge",
+    "homepage": "https://github.com/DooperDrew/mackeys-win",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/DooperDrew/magicbridge/releases/download/v$Version/MagicBridge-v$Version-portable.zip",
+            "url": "https://github.com/DooperDrew/mackeys-win/releases/download/v$Version/MacKeys-v$Version-portable.zip",
             "hash": "$Hash"
         }
     },
     "bin": [
-        "magicbridge.exe"
+        "mackeys.exe"
     ],
     "shortcuts": [
         [
-            "magicbridge.exe",
-            "MagicBridge"
+            "mackeys.exe",
+            "MacKeys"
         ]
     ],
     "checkver": "github",
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/DooperDrew/magicbridge/releases/download/v`$version/MagicBridge-v`$version-portable.zip"
+                "url": "https://github.com/DooperDrew/mackeys-win/releases/download/v`$version/MacKeys-v`$version-portable.zip"
             }
         }
     }
 }
 "@
 
+[System.IO.File]::WriteAllText((Join-Path $ScoopDir "mackeys.json"), $ScoopJson, [System.Text.Encoding]::UTF8)
 [System.IO.File]::WriteAllText((Join-Path $ScoopDir "magicbridge.json"), $ScoopJson, [System.Text.Encoding]::UTF8)
-Write-Host "  -> Scoop manifest written to: $(Join-Path $ScoopDir 'magicbridge.json')" -ForegroundColor Green
+Write-Host "  -> Scoop manifest written to: $(Join-Path $ScoopDir 'mackeys.json')" -ForegroundColor Green
 
 Write-Host "`nAll package distribution manifests generated successfully!" -ForegroundColor Cyan

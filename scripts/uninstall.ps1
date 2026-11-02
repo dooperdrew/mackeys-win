@@ -1,20 +1,20 @@
 <#
 .SYNOPSIS
-    Uninstalls MagicBridge, removes autostart entries, shortcuts, and application files.
+    Uninstalls MacKeys, removes autostart entries, shortcuts, and application files.
 
 .DESCRIPTION
-    Stops running MagicBridge processes, removes the autostart entry from the
+    Stops running MacKeys processes, removes the autostart entry from the
     current user registry (HKCU\Software\Microsoft\Windows\CurrentVersion\Run),
-    removes the Windows Add/Remove Programs registration (HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MagicBridge),
+    removes the Windows Add/Remove Programs registration (HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys),
     deletes Start Menu and Desktop shortcuts, removes program files, and optionally purges configuration data
-    in %APPDATA%\MagicBridge.
+    in %APPDATA%\MacKeys.
 
 .PARAMETER TargetDir
     The installation directory to remove. Defaults to the folder containing this script if installed,
-    or "$env:LOCALAPPDATA\Programs\MagicBridge".
+    or "$env:LOCALAPPDATA\Programs\MacKeys".
 
 .PARAMETER PurgeData
-    If specified, permanently removes user settings and logs in %APPDATA%\MagicBridge without prompting.
+    If specified, permanently removes user settings and logs in %APPDATA%\MacKeys without prompting.
 
 .PARAMETER Silent
     Runs the uninstaller silently without prompts or message boxes.
@@ -44,7 +44,7 @@ if (-not $TargetDir) {
     if (Test-Path (Join-Path $ScriptDir "magicbridge-agent.exe")) {
         $TargetDir = $ScriptDir
     } else {
-        $TargetDir = "$env:LOCALAPPDATA\Programs\MagicBridge"
+        $TargetDir = "$env:LOCALAPPDATA\Programs\MacKeys"
     }
 }
 
@@ -53,8 +53,8 @@ if (-not $Silent) {
     try {
         Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
         $confirm = [System.Windows.Forms.MessageBox]::Show(
-            "Are you sure you want to completely uninstall MagicBridge (Apple Magic Keyboard for Windows)?",
-            "Uninstall MagicBridge",
+            "Are you sure you want to completely uninstall MacKeys (Apple Magic Keyboard for Windows)?",
+            "Uninstall MacKeys",
             [System.Windows.Forms.MessageBoxButtons]::YesNo,
             [System.Windows.Forms.MessageBoxIcon]::Question
         )
@@ -65,7 +65,7 @@ if (-not $Silent) {
 
         if (-not $PurgeData) {
             $askPurge = [System.Windows.Forms.MessageBox]::Show(
-                "Do you also want to remove your custom keyboard profiles and settings stored in %APPDATA%\MagicBridge?",
+                "Do you also want to remove your custom keyboard profiles and settings stored in %APPDATA%\MacKeys?",
                 "Remove User Data?",
                 [System.Windows.Forms.MessageBoxButtons]::YesNo,
                 [System.Windows.Forms.MessageBoxIcon]::Question
@@ -77,9 +77,9 @@ if (-not $Silent) {
     } catch {
         # Fallback to console prompt if WinForms dialog is unavailable
         Write-Host "==================================================" -ForegroundColor Cyan
-        Write-Host "         MagicBridge Uninstallation Tool          " -ForegroundColor Cyan
+        Write-Host "         MacKeys Uninstallation Tool          " -ForegroundColor Cyan
         Write-Host "==================================================" -ForegroundColor Cyan
-        $ans = Read-Host "Are you sure you want to uninstall MagicBridge? (y/N)"
+        $ans = Read-Host "Are you sure you want to uninstall MacKeys? (y/N)"
         if ($ans -notmatch "^[yY]") {
             Write-Host "Uninstallation cancelled."
             return
@@ -88,12 +88,12 @@ if (-not $Silent) {
 }
 
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "         MagicBridge Uninstallation Tool          " -ForegroundColor Cyan
+Write-Host "         MacKeys Uninstallation Tool          " -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "Target Directory: $TargetDir"
 
 # 1. Stop running processes
-Write-Host "`n[1/5] Stopping running MagicBridge processes..." -ForegroundColor Cyan
+Write-Host "`n[1/5] Stopping running MacKeys processes..." -ForegroundColor Cyan
 Get-Process -Name "magicbridge-agent", "magicbridge-settings" -ErrorAction SilentlyContinue | ForEach-Object {
     Write-Host "  Stopping $($_.ProcessName) (PID $($_.Id))..."
     try {
@@ -106,10 +106,10 @@ Start-Sleep -Milliseconds 400
 Write-Host "`n[2/5] Removing autostart entry from HKCU Run..." -ForegroundColor Cyan
 $RunKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
 try {
-    $existing = Get-ItemProperty -Path $RunKey -Name "MagicBridge" -ErrorAction SilentlyContinue
+    $existing = Get-ItemProperty -Path $RunKey -Name "MacKeys" -ErrorAction SilentlyContinue
     if ($existing) {
-        Remove-ItemProperty -Path $RunKey -Name "MagicBridge" -ErrorAction SilentlyContinue
-        Write-Host "  Removed 'MagicBridge' from $RunKey" -ForegroundColor Green
+        Remove-ItemProperty -Path $RunKey -Name "MacKeys" -ErrorAction SilentlyContinue
+        Write-Host "  Removed 'MacKeys' from $RunKey" -ForegroundColor Green
     } else {
         Write-Host "  No autostart registry entry found." -ForegroundColor Gray
     }
@@ -119,7 +119,7 @@ try {
 
 # 3. Remove Windows Add/Remove Programs (Uninstall) registry entry
 Write-Host "`n[3/5] Removing Windows Add/Remove Programs entry..." -ForegroundColor Cyan
-$UninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MagicBridge"
+$UninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\MacKeys"
 try {
     if (Test-Path $UninstallKey) {
         Remove-Item -Path $UninstallKey -Recurse -Force -ErrorAction SilentlyContinue
@@ -133,7 +133,7 @@ try {
 
 # 4. Remove Shortcuts (Start Menu & Desktop)
 Write-Host "`n[4/5] Removing shortcuts..." -ForegroundColor Cyan
-$StartMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\MagicBridge"
+$StartMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\MacKeys"
 if (Test-Path $StartMenuDir) {
     Remove-Item -Path $StartMenuDir -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "  Removed Start Menu folder: $StartMenuDir" -ForegroundColor Green
@@ -143,7 +143,7 @@ if (Test-Path $StartMenuDir) {
 
 $DesktopDir = [Environment]::GetFolderPath([Environment+SpecialFolder]::Desktop)
 if (Test-Path $DesktopDir) {
-    @("MagicBridge Settings.lnk", "MagicBridge Agent.lnk", "MagicBridge.lnk") | ForEach-Object {
+    @("MacKeys Settings.lnk", "MacKeys Agent.lnk", "MacKeys.lnk") | ForEach-Object {
         $deskLnk = Join-Path $DesktopDir $_
         if (Test-Path $deskLnk) {
             Remove-Item -Path $deskLnk -Force -ErrorAction SilentlyContinue
@@ -169,13 +169,13 @@ if (Test-Path $TargetDir) {
 }
 
 if ($PurgeData) {
-    $AppDataDir = Join-Path $env:APPDATA "MagicBridge"
+    $AppDataDir = Join-Path $env:APPDATA "MacKeys"
     if (Test-Path $AppDataDir) {
         Remove-Item -Path $AppDataDir -Recurse -Force -ErrorAction SilentlyContinue
         Write-Host "  Purged user configuration directory: $AppDataDir" -ForegroundColor Green
     }
 } else {
-    Write-Host "  User settings in %APPDATA%\MagicBridge were preserved." -ForegroundColor Gray
+    Write-Host "  User settings in %APPDATA%\MacKeys were preserved." -ForegroundColor Gray
 }
 
 Write-Host "`n==================================================" -ForegroundColor Green
@@ -186,8 +186,8 @@ Write-Host ""
 if (-not $Silent) {
     try {
         [System.Windows.Forms.MessageBox]::Show(
-            "MagicBridge has been successfully removed from your computer.",
-            "Uninstall MagicBridge",
+            "MacKeys has been successfully removed from your computer.",
+            "Uninstall MacKeys",
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Information
         ) | Out-Null

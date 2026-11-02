@@ -50,7 +50,7 @@ When connected over Bluetooth Classic (`{00001124-0000-1000-8000-00805f9b34fb}_V
 4. **No hardware Fn translation:** Pressing `Fn` alone, `Fn + Arrows`, `Fn + Backspace`, `Fn + Enter`, or `Fn + F1..F12` produces **no vendor/consumer report** on any of the readable collections (`[0]`, `[1]`, `[3]`, `[4]`), and the keyboard sends the unmodified base key (`Left/Right/Up/Down`, `Backspace`, `Enter`, `F1..F12`).
 5. **Architecture consequence (resolves 🔬 in `F1.1`, `F1.4`, `F4.1`, `03-architecture.md`):**
    - Intercepting physical `Fn` or `Eject` on Windows requires a kernel filter driver above/below `kbdhid.sys`, which is explicitly forbidden by `NFR-S1` and `03-architecture.md` (admin requirement, BSOD risk, anti-cheat incompatibility).
-   - MagicBridge therefore uses the **Fn fallback key (`F1.4`)** as its Fn-layer modifier (default: **Right Option / `VK_RMENU`**, user-configurable to any key such as Right Control or `F19`).
+   - MacKeys therefore uses the **Fn fallback key (`F1.4`)** as its Fn-layer modifier (default: **Right Option / `VK_RMENU`**, user-configurable to any key such as Right Control or `F19`).
 
 ---
 

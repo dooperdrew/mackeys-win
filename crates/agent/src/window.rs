@@ -30,7 +30,7 @@ use crate::tray::{
 use magicbridge_core::TopRowMode;
 
 /// Dedicated window class name for the agent's hidden window.
-pub const WINDOW_CLASS_NAME: PCWSTR = w!("MagicBridge_MsgWndClass");
+pub const WINDOW_CLASS_NAME: PCWSTR = w!("MacKeys_MsgWndClass");
 
 /// TaskbarCreated broadcast message string.
 pub const TASKBAR_CREATED_STR: PCWSTR = w!("TaskbarCreated");
@@ -143,7 +143,7 @@ impl WindowData {
                 && status.is_charging
                 && let Some(ref tray) = self.tray
             {
-                let title = "MagicBridge — Charging";
+                let title = "MacKeys — Charging";
                 let msg = format!(
                     "Magic Keyboard connected to power ({}%).",
                     status.percentage
@@ -153,7 +153,7 @@ impl WindowData {
                 && !status.is_charging
                 && let Some(ref tray) = self.tray
             {
-                let title = "MagicBridge — Disconnected";
+                let title = "MacKeys — Disconnected";
                 let msg = format!(
                     "Magic Keyboard running on battery ({}%).",
                     status.percentage
@@ -169,7 +169,7 @@ impl WindowData {
                 self.critical_battery_notified = true;
                 self.low_battery_notified = true;
                 if let Some(ref tray) = self.tray {
-                    let title = "MagicBridge — Critical Battery";
+                    let title = "MacKeys — Critical Battery";
                     let msg = format!(
                         "Magic Keyboard battery is critically low ({}%)! Connect charger immediately.",
                         status.percentage
@@ -181,7 +181,7 @@ impl WindowData {
             {
                 self.low_battery_notified = true;
                 if let Some(ref tray) = self.tray {
-                    let title = "MagicBridge — Low Battery";
+                    let title = "MacKeys — Low Battery";
                     let msg = format!(
                         "Magic Keyboard battery is low ({}%). Connect a charging cable.",
                         status.percentage
@@ -297,7 +297,7 @@ impl MessageWindow {
             CreateWindowExW(
                 WINDOW_EX_STYLE(0),
                 WINDOW_CLASS_NAME,
-                w!("MagicBridge Agent"),
+                w!("MacKeys Agent"),
                 WS_OVERLAPPED,
                 0,
                 0,
@@ -416,14 +416,12 @@ unsafe extern "system" fn wnd_proc(
                     {
                         let info = magicbridge_core::device::parse_hid_path(&path);
                         let transport_str = info.transport.to_string();
-                        println!(
-                            "[MagicBridge] Apple keyboard connected ({transport_str}): {path}"
-                        );
+                        println!("[MacKeys] Apple keyboard connected ({transport_str}): {path}");
                         data.state.on_device_arrival(&path, &transport_str);
                         data.update_hook_state();
                         data.poll_battery();
                         if let Some(ref tray) = data.tray {
-                            let title = "MagicBridge — Keyboard Connected";
+                            let title = "MacKeys — Keyboard Connected";
                             let msg = format!(
                                 "Apple Keyboard connected ({transport_str}). Active profile: {}",
                                 data.state.config.active_profile
@@ -439,7 +437,7 @@ unsafe extern "system" fn wnd_proc(
                     if let Some(path) = parse_device_interface_path(lparam)
                         && is_apple_keyboard_path(&path)
                     {
-                        println!("[MagicBridge] Apple keyboard disconnected: {path}");
+                        println!("[MacKeys] Apple keyboard disconnected: {path}");
                         data.state.on_device_removal(&path);
                         // If our tracked set became empty, re-probe present devices
                         // in case another interface was not tracked or removed out of order.
@@ -451,7 +449,7 @@ unsafe extern "system" fn wnd_proc(
                         data.poll_battery();
                         if let Some(ref tray) = data.tray {
                             tray.show_notification(
-                                "MagicBridge — Keyboard Disconnected",
+                                "MacKeys — Keyboard Disconnected",
                                 "Apple Keyboard disconnected. Remapping paused.",
                             );
                         }
@@ -468,14 +466,14 @@ unsafe extern "system" fn wnd_proc(
             let event = wparam.0 as u32;
             match event {
                 PBT_APMSUSPEND => {
-                    println!("[MagicBridge] Power broadcast: system entering suspend / sleep");
+                    println!("[MacKeys] Power broadcast: system entering suspend / sleep");
                     if let Some(ref h) = data.hook {
                         h.set_active(false);
                     }
                 }
                 PBT_APMRESUMEAUTOMATIC | PBT_APMRESUMESUSPEND => {
                     println!(
-                        "[MagicBridge] Power broadcast: system resumed from suspend (event={event:#x})"
+                        "[MacKeys] Power broadcast: system resumed from suspend (event={event:#x})"
                     );
                     let devices = probe_connected_apple_keyboards();
                     data.state.sync_connected_devices(&devices);

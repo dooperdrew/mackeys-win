@@ -1,12 +1,12 @@
 # Release & Versioning Methodology
 
-This document establishes the official release methodology, semantic versioning guidelines, packaging workflows, and release gate checklist for **MagicBridge**.
+This document establishes the official release methodology, semantic versioning guidelines, packaging workflows, and release gate checklist for **MacKeys**.
 
 ---
 
 ## 1. Semantic Versioning Specification (SemVer)
 
-MagicBridge adheres strictly to [Semantic Versioning 2.0.0](https://semver.org/):
+MacKeys adheres strictly to [Semantic Versioning 2.0.0](https://semver.org/):
 
 $$\text{Version} = \text{MAJOR}.\text{MINOR}.\text{PATCH}$$
 
@@ -18,7 +18,7 @@ flowchart TD
     CHANGE -->|Bug fixes, hardware quirks, soak fixes, translations| PATCH["PATCH: v0.2.1, v0.2.2<br/>• Timing fixes (e.g. AltGr 0x21D)<br/>• UI label corrections & translations<br/>• Regression & security patches"]
 ```
 
-| Component | Increment Trigger | Examples in MagicBridge |
+| Component | Increment Trigger | Examples in MacKeys |
 |---|---|---|
 | **MAJOR** (`X.0.0`) | Breaking architecture shifts, IPC protocol breaks, or official graduation to production v1.0. | `v1.0.0`: First public general availability release with physical hardware signoff. |
 | **MINOR** (`0.X.0`) | New backward-compatible features, major UX additions, installers, new keyboard models. | `v0.2.0`: Setup wizard, onboarding flow, responsive layout, 109-key QA tester. |
@@ -58,16 +58,16 @@ sequenceDiagram
     Lead->>Build: 2. Run Verification Gate (fmt, clippy, tests)
     Build-->>Lead: PASS (100% tests clean)
     Lead->>Build: 3. Run package-release.ps1
-    Build-->>Repo: dist/MagicBridge-vX.Y.Z-windows-x64.zip (2.15 MB)
+    Build-->>Repo: dist/MacKeys-vX.Y.Z-windows-x64.zip (2.15 MB)
     Lead->>Git: 4. git commit & git tag -a vX.Y.Z
     Git->>GH: git push origin main --tags
-    Lead->>GH: 5. gh release create vX.Y.Z dist/MagicBridge-vX.Y.Z-windows-x64.zip
+    Lead->>GH: 5. gh release create vX.Y.Z dist/MacKeys-vX.Y.Z-windows-x64.zip
     GH-->>Lead: Release Published Live
 ```
 
 ### Step 1: Version Bump & Changelog Preparation
 1. Update `version = "X.Y.Z"` in root `Cargo.toml`.
-2. Add a comprehensive entry in [`CHANGELOG.md`](../CHANGELOG.md) under `## YYYY-MM-DD — MagicBridge vX.Y.Z: <Release Title> (Release ✅)`.
+2. Add a comprehensive entry in [`CHANGELOG.md`](../CHANGELOG.md) under `## YYYY-MM-DD — MacKeys vX.Y.Z: <Release Title> (Release ✅)`.
 3. Update version badge in [`README.md`](../README.md) and [`docs/05-roadmap.md`](05-roadmap.md).
 
 ### Step 2: Quality Verification Gate
@@ -92,7 +92,7 @@ Run the automated release packaging tool:
 powershell -ExecutionPolicy Bypass -File .\scripts\package-release.ps1
 ```
 This produces:
-1. `dist/MagicBridge-v<version>-windows-x64.zip` containing:
+1. `dist/MacKeys-v<version>-windows-x64.zip` containing:
    - `magicbridge-agent.exe`
    - `magicbridge-settings.exe`
    - `locales/` (`en.toml`, `it.toml`)
@@ -100,21 +100,21 @@ This produces:
    - `install.ps1` & `uninstall.ps1`
    - `installer.iss`
    - `user-guide.md`, `README.md`, `LICENSE`
-2. **WinGet Manifests:** `packaging/winget/manifests/d/DooperDrew/MagicBridge/<version>/` (version, installer, and defaultLocale YAMLs ready for `microsoft/winget-pkgs`).
+2. **WinGet Manifests:** `packaging/winget/manifests/d/DooperDrew/MacKeys/<version>/` (version, installer, and defaultLocale YAMLs ready for `microsoft/winget-pkgs`).
 3. **Scoop Manifest:** `packaging/scoop/magicbridge.json` (auto-populated with latest SHA256 and release download URL).
 
 ### Step 4: Git Commit & Tagging
 ```powershell
 git add Cargo.toml Cargo.lock CHANGELOG.md README.md docs/ scripts/
 git commit -m "chore: bump release version to vX.Y.Z"
-git tag -a vX.Y.Z -m "MagicBridge vX.Y.Z — <Release Title>"
+git tag -a vX.Y.Z -m "MacKeys vX.Y.Z — <Release Title>"
 git push origin main --tags
 ```
 
 ### Step 5: GitHub Release Publication
 Publish the release asset and changelog to GitHub:
 ```powershell
-gh release create vX.Y.Z "dist\MagicBridge-vX.Y.Z-windows-x64.zip" --title "MagicBridge vX.Y.Z — <Title>" --notes-file <notes.md>
+gh release create vX.Y.Z "dist\MacKeys-vX.Y.Z-windows-x64.zip" --title "MacKeys vX.Y.Z — <Title>" --notes-file <notes.md>
 ```
 
 ---

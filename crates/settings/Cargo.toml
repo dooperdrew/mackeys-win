@@ -1,6 +1,6 @@
 [package]
 name = "magicbridge-settings"
-description = "MagicBridge settings GUI (egui), runs only while open."
+description = "MacKeys settings GUI (egui), runs only while open."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,7 +11,7 @@ name = "magicbridge_settings"
 path = "src/lib.rs"
 
 [[bin]]
-name = "magicbridge"
+name = "mackeys"
 path = "src/main.rs"
 
 [dependencies]

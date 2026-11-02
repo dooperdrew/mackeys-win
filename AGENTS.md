@@ -1,13 +1,13 @@
 # AGENTS.md — Mandatory Operating Guidelines for AI Agents
 
 > **CRITICAL FOR ALL AI AGENTS & CODING ASSISTANTS:**
-> You are working on **MagicBridge** (`https://github.com/DooperDrew/magicbridge`).
+> You are working on **MacKeys** (`https://github.com/DooperDrew/mackeys-win`).
 > These guidelines are **strictly binding**. Every agent operating in this repository MUST comply with the workflow, architecture, performance budgets, sole committer protocol, and logging rules defined below without exception.
 
 ---
 
 ## 1. Project Mission & Identity
-- **Name:** MagicBridge
+- **Name:** MacKeys
 - **Purpose:** A native, ultra-lightweight Windows 10/11 x64 utility that makes the Apple Magic Keyboard with Numeric Keypad (**model A1843**) behave as a first-class Windows keyboard.
 - **Key Capabilities:** User-mode Fn layer, media keys vs. F-keys switching, modifier presets, missing system keys (`Print Screen`, `Scroll Lock`, `Pause`), direct HID battery reporting, and named profiles with multiple language layouts (`ISO Italian`, `ANSI US`, `ISO UK`, `ISO German`, `ISO French`, custom).
 
@@ -15,7 +15,7 @@
 
 ## 2. Multi-Agent Organization & Sole Committer Protocol
 
-To enable clean parallelization across multiple tasks and optimize token consumption across different AI models, MagicBridge enforces a **Hub-and-Spoke (Lead & Worker)** hierarchy:
+To enable clean parallelization across multiple tasks and optimize token consumption across different AI models, MacKeys enforces a **Hub-and-Spoke (Lead & Worker)** hierarchy:
 
 ```mermaid
 flowchart TD
@@ -63,7 +63,7 @@ Every subagent role follows the standard convention: `<Tier>-<Domain>-<Milestone
 
 To maximize token efficiency without sacrificing code quality or safety, every task is assigned a complexity tier:
 
-| Tier | Scope & Workload | Criteria in MagicBridge | Target Model |
+| Tier | Scope & Workload | Criteria in MacKeys | Target Model |
 |---|---|---|---|
 | **Tier 1 (T1 — Lean)** | Pure logic, schemas, serialization, unit tests, i18n, packaging scripts, docs. | • Pure Rust (`crates/core`).<br>• `#![forbid(unsafe_code)]`.<br>• Zero Win32 dependencies. | **`flash_lite`** or **`flash`** |
 | **Tier 2 (T2 — Moderate)** | UI widgets, event handling, named pipes, standard Win32 message pumps. | • `egui` views & layout widgets.<br>• Tray menu callbacks.<br>• Named pipe client/server. | **`flash`** or **`pro`** |
@@ -124,10 +124,10 @@ Before writing or modifying any code, the agent MUST read:
   - Use `;` instead of `&&` for command chaining in PowerShell 5.
   - Scope file searches strictly to the project workspace; never run unconstrained recursive searches over `.cargo`, `target`, or dependency caches.
 - **Single-Binary Distribution & Setup Ergonomics:**
-  - Release bundles must NEVER contain multiple confusing executables. Distribute a single standalone installer (`MagicBridge-Setup.exe`) and a clean portable archive containing only `magicbridge.exe` and resources.
+  - Release bundles must NEVER contain multiple confusing executables. Distribute a single standalone installer (`MacKeys-Setup.exe`) and a clean portable archive containing only `mackeys.exe` and resources.
   - Packaging scripts (`scripts/package-release.ps1`) MUST isolate releases into individual version folders (`dist\v{Version}\`) and unpack a ready-to-test extracted `portable\` directory alongside installers and zip archives.
   - The setup wizard MUST implement a progressive 5-step flow with breadcrumbs and animated progress bar, masking non-basic options behind an advanced toggle, and registering full uninstallation across Windows Settings, Start Menu, and Settings GUI.
-  - Launching `magicbridge.exe` directly MUST ALWAYS open the Settings Panel directly without hijacking or blocking normal application access.
+  - Launching `mackeys.exe` directly MUST ALWAYS open the Settings Panel directly without hijacking or blocking normal application access.
 
 ### D. Verification Gate (MUST PASS Locally)
 Workers validate their intermediate changes using the **Fast Gate**:
@@ -155,7 +155,7 @@ Once the task is validated:
 
 ## 6. Hardware Realities & Known Quirks (From M0)
 - **Vendor IDs:** The keyboard identifies with `VID = 0x05AC` on USB and **`VID = 0x004C`** over Bluetooth Classic. Always check both via `magicbridge_core::is_apple_vendor`.
-- **Physical Fn / Eject:** Stripped by Windows `kbdhid.sys` in kernel mode. MagicBridge relies on user-configurable trigger keys (default: Right Option / `VK_RMENU`).
+- **Physical Fn / Eject:** Stripped by Windows `kbdhid.sys` in kernel mode. MacKeys relies on user-configurable trigger keys (default: Right Option / `VK_RMENU`).
 - **ISO / Italian AltGr Quirk:** Pressing physical Right Option on ISO Italian layouts causes Windows to synthesize an artificial `VK_LCONTROL` with `scanCode == 0x21D` ~0.8 ms earlier. The remapping hook must swallow `0x21D` whenever Right Option is remapped or used as Fn.
 - **Battery Report:** Read from Apple Vendor Collection `0xFF00:0x0014` report ID `0x90` (`[0x90, status_flags, pct]`).
 

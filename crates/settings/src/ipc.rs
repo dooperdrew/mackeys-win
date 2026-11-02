@@ -1,6 +1,6 @@
 //! Named pipe IPC client wrapper and background agent process lifecycle.
 //!
-//! Provides communication with `magicbridge-agent` via `\\.\pipe\MagicBridge_Agent_IPC` (F7.5)
+//! Provides communication with `magicbridge-agent` via `\\.\pipe\MacKeys_Agent_IPC` (F7.5)
 //! and agent launch detection ("Agent Not Running" banner with "Start Agent" button).
 
 use std::path::{Path, PathBuf};
@@ -53,7 +53,7 @@ impl SettingsIpc {
         }
     }
 
-    /// Sends a reload command instructing the agent to reload `%APPDATA%\MagicBridge\config.toml`.
+    /// Sends a reload command instructing the agent to reload `%APPDATA%\MacKeys\config.toml`.
     pub fn reload_config(&self) -> Result<(), String> {
         match self.client.send(&IpcRequest::Reload) {
             Ok(resp) => {

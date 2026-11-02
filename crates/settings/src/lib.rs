@@ -1,4 +1,4 @@
-//! MagicBridge Settings GUI Library.
+//! MacKeys Settings GUI Library.
 //!
 //! Provides the visual keyboard models, localization, views, and application shell.
 
@@ -9,7 +9,7 @@ pub mod ipc;
 pub mod keyboard_model;
 pub mod views;
 
-pub use app::{MagicBridgeApp, SettingsTab};
+pub use app::{MacKeysApp, SettingsTab};
 pub use i18n::I18n;
 pub use installer::{
     InstallOptions, InstallerApp, UninstallerApp, is_installed_location, perform_install,

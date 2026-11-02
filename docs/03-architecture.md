@@ -9,7 +9,7 @@
 | Language | **Rust** (stable, `x86_64-pc-windows-msvc`) |
 | Win32 API | `windows` crate (official Microsoft bindings) |
 | Settings GUI | `egui` / `eframe` (single native exe, only runs while open) |
-| Config format | TOML (`serde` + `toml`) in `%APPDATA%\MagicBridge\config.toml` |
+| Config format | TOML (`serde` + `toml`) in `%APPDATA%\MacKeys\config.toml` |
 | i18n | Simple key→string TOML files per language (`en.toml`, `it.toml`) |
 | Build | Cargo workspace; release profile with `lto = true`, `opt-level = "z"` or `3`, `panic = "abort"`, `strip = true` |
 
