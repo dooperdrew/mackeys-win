@@ -4,7 +4,7 @@
 
 **A tiny, invisible, native Windows 10/11 utility that makes Apple Keyboards (Full-Size & Compact) feel right at home on Windows.**
 
-[![Latest Release](https://img.shields.io/github/v/release/DooperDrew/magicbridge?logo=github&label=release%20v0.4.0)](https://github.com/DooperDrew/magicbridge/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/DooperDrew/magicbridge?logo=github&label=release%20v0.4.1)](https://github.com/DooperDrew/magicbridge/releases/latest)
 [![Rust Stable](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform: Windows 10/11 x64](https://img.shields.io/badge/platform-Windows%2010%2F11%20x64-informational.svg)](https://microsoft.com/windows)
@@ -13,7 +13,7 @@
 
 <br/>
 
-| 📖 [User Guide](docs/user-guide.md) | 🪄 [Setup Wizard](scripts/setup-wizard.ps1) | 🧪 [Hardware QA](docs/06-qa-and-validation.md) | 📦 [WinGet & Releases](docs/release-methodology.md) | 🤝 [Community Plan](docs/08-community-and-growth-strategy.md) | 🤖 [Architecture](docs/multi-agent-methodology.md) |
+| 📖 [User Guide](docs/user-guide.md) | 🪄 [Setup Installer](#-download--installation) | 🧪 [Hardware QA](docs/06-qa-and-validation.md) | 📦 [WinGet & Releases](docs/release-methodology.md) | 🤝 [Community Plan](docs/08-community-and-growth-strategy.md) | 🤖 [Architecture](docs/multi-agent-methodology.md) |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 
 </div>
@@ -40,6 +40,22 @@ Apple Keyboards are gorgeous pieces of hardware, but when paired with Windows 10
 - **Heavy or invasive workarounds:** Existing third-party solutions often require paid licenses, obsolete Apple Boot Camp drivers, kernel-mode filters (which trigger game anti-cheat bans), or bulky Electron apps.
 
 **MagicBridge solves this with zero kernel drivers, zero DLL injection, and zero background idle CPU.**
+
+---
+
+## ⚡ How MagicBridge Compares to Alternatives
+
+| Feature / Invariant | **MagicBridge** | *Magic Utilities* | *Apple Boot Camp Drivers* | *WinAppleKey* | *AutoHotkey Scripts (AHK)* |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **Architecture** | **Driverless (User Mode)** | Kernel Driver (`.sys`) | Kernel Driver (`.sys`) | Kernel LowerFilter | Script Interpreter |
+| **Game Anti-Cheat Safe** | **✅ 100% Safe** | ⚠️ Risk (Kernel hook) | ⚠️ Risk (Kernel driver) | ⚠️ Risk (Test-signed) | ⚠️ Flagged by some anticheats |
+| **Idle CPU Overhead** | **0.0% (Event-driven)** | Low (<1%) | High (Polling loops) | Very Low | Variable (Script polling) |
+| **Memory Footprint** | **≤ 5 MB** | ~20–40 MB | ~10 MB | ~2 MB | ~15–30 MB |
+| **Direct Battery Gauge** | **✅ Yes (HID Report 0x90)** | ✅ Yes | ❌ No | ❌ No | ❌ No |
+| **Fn Key & Combos** | **✅ User-mode Fn layer** | ✅ Yes | ⚠️ Rigid | ⚠️ Limited | ⚠️ Flaky with modifiers |
+| **ISO / Italian AltGr Fix** | **✅ Automatic (`0x21D`)** | ❌ No | ❌ No | ❌ No | ⚠️ Complex script required |
+| **Price & License** | **Free & Open Source (MIT)** | Paid Subscription ($15+/yr) | Proprietary (Extract) | Free (Abandoned C++) | Free (GPL/MIT scripts) |
+| **Tech Stack** | **Rust + Win32 + egui** | C++ / .NET | C / Driver Framework | C++ Driver | AutoHotkey v1/v2 |
 
 ---
 
@@ -73,46 +89,39 @@ Apple Keyboards are gorgeous pieces of hardware, but when paired with Windows 10
 
 ## 📥 Download & Installation
 
-MagicBridge requires **no administrator privileges** and provides multiple distribution channels to fit your workflow:
+MagicBridge requires **no administrator privileges**, installs in seconds, and provides multiple distribution channels:
 
-### Option 1: Microsoft WinGet (Recommended)
-Install directly using the official Windows Package Manager:
+### Option 1: Standalone Setup Installer (Recommended)
+1. Download **[`MagicBridge-Setup.exe`](https://github.com/DooperDrew/magicbridge/releases/latest)** from GitHub Releases.
+2. Run the single-file setup wizard. The 5-step installer lets you:
+   - Select your installation directory (defaults to `%LOCALAPPDATA%\Programs\MagicBridge`).
+   - Create Start Menu and Desktop shortcuts.
+   - Configure automatic launch on Windows sign-in.
+   - Automatically probes connected Apple hardware and pre-configures your layout.
+   - Registers cleanly in Windows **Installed Apps** (Control Panel / Settings) with zero-leftover uninstallation.
+
+*For headless / silent installations:*
 ```powershell
-# Install latest release from community repository:
-winget install DooperDrew.MagicBridge
-
-# Or install directly from the local repository manifest:
-winget install --manifest packaging/winget/manifests/d/DooperDrew/MagicBridge/0.2.1/
+.\MagicBridge-Setup.exe --silent
 ```
 
-### Option 2: Scoop Package Manager
-Install via Scoop for automatic PATH management and easy updates:
+### Option 2: Portable ZIP (Zero Installation)
+If you prefer not to install anything:
+1. Download **`MagicBridge-v0.4.1-portable.zip`** from [GitHub Releases](https://github.com/DooperDrew/magicbridge/releases/latest).
+2. Extract and run **`magicbridge.exe`**.
+3. Settings and daemon start immediately. Zero registry keys touched; perfect for running from a USB drive.
+
+### Option 3: Microsoft WinGet
+Install directly via the official Windows Package Manager:
+```powershell
+winget install DooperDrew.MagicBridge
+```
+
+### Option 4: Scoop Package Manager
+Install via Scoop:
 ```powershell
 scoop install https://raw.githubusercontent.com/DooperDrew/magicbridge/main/packaging/scoop/magicbridge.json
 ```
-
-### Option 3: Guided Windows Setup Wizard (Zero-Elevation GUI)
-1. Download the latest release archive (`MagicBridge-v0.2.1-windows-x64.zip`) from [GitHub Releases](https://github.com/DooperDrew/magicbridge/releases/latest).
-2. Extract the ZIP and double-click **`setup.cmd`** (or execute `.\setup-wizard.ps1` in PowerShell).
-3. The graphical setup wizard lets you:
-   - Choose your install location (defaults to `%LOCALAPPDATA%\Programs\MagicBridge`).
-   - Create Start Menu and Desktop shortcuts.
-   - Configure automatic launch on Windows sign-in.
-   - Automatically register in Windows **Installed apps** (Control Panel / Settings) with full clean uninstallation support.
-
-*For silent or automated deployments:*
-```powershell
-# Silent zero-touch install:
-.\setup-wizard.ps1 -Silent
-
-# Console-only interactive install:
-.\setup-wizard.ps1 -NoGui
-```
-
-### Option 4: Portable ZIP (No Installation Required)
-1. Download and extract `MagicBridge-v0.2.1-windows-x64.zip`.
-2. Double-click `magicbridge-agent.exe`.
-3. The keyboard tray icon will appear immediately. Zero registry keys touched. Runs seamlessly from a USB drive or local folder.
 
 ---
 
@@ -219,6 +228,43 @@ Progress is tracked via GitHub Milestones and Issues:
 - [ ] **M9: Quality Assurance & Empirical Validation** — Physical A1843 hardware matrix execution, sleep/resume, game mode auto-pause, and security verification. See [docs/06-qa-and-validation.md](docs/06-qa-and-validation.md).
 - [ ] **M10: User Experience & Onboarding Improvements** — Guided installer wizard, first-run onboarding configuration wizard, responsive Settings layout, and live battery tray indicator. See [docs/07-ux-and-improvements.md](docs/07-ux-and-improvements.md).
 - [x] **[M11: GitHub Copilot Agent Integration](https://github.com/DooperDrew/magicbridge/issues/16)** — Cloud multi-agent collaborative workflows, permanent repo instructions (`.github/copilot-instructions.md`), and automated agent task issue templates. See [docs/multi-agent-methodology.md](docs/multi-agent-methodology.md).
+
+---
+
+## 🔍 Frequently Asked Questions (FAQ)
+
+<details>
+<summary><b>Why doesn't the physical Fn key work on Windows out-of-the-box?</b></summary>
+Windows' inbox kernel driver (<code>kbdhid.sys</code>) intercepts the physical Fn key and treats it as an internal hardware modifier; it is never forwarded to user-mode software. MagicBridge solves this elegantly without risky kernel drivers by providing a user-configurable Fn trigger key (Right Option / AltGr by default, or Right Control, or F19), giving you full access to Home, End, PageUp, PageDown, Forward Delete, and media controls.
+</details>
+
+<details>
+<summary><b>Is MagicBridge safe with anti-cheat software in online multiplayer games?</b></summary>
+Yes, 100%. Unlike Boot Camp driver hacks or commercial utilities that install unsigned or third-party kernel filter drivers (<code>.sys</code>) that can trigger anti-cheat bans (Vanguard, Easy Anti-Cheat, BattlEye), MagicBridge operates purely in standard Windows user mode. Furthermore, Game Mode automatically pauses all remappings whenever a fullscreen DirectX or Vulkan game is launched.
+</details>
+
+<details>
+<summary><b>How does MagicBridge read the battery level without Apple drivers?</b></summary>
+MagicBridge reads battery telemetry directly from the Apple Vendor HID Collection (Usage Page <code>0xFF00</code>, Usage <code>0x0014</code>, Report ID <code>0x90</code>). Both USB Lightning connection and Bluetooth Classic report exact real-time percentages and charging state.
+</details>
+
+<details>
+<summary><b>Can I swap Command and Alt to match standard Windows keyboards?</b></summary>
+Yes. In the Settings UI or System Tray, choose the <b>Windows Layout</b> preset. This maps physical Command to Control/Alt and physical Option to Windows Key, giving you the natural physical feel of a standard PC keyboard.
+</details>
+
+<details>
+<summary><b>Which Apple keyboard models are supported?</b></summary>
+MagicBridge supports the entire desktop family:
+<ul>
+  <li><b>A1843</b>: Magic Keyboard with Numeric Keypad (Lightning/Bluetooth)</li>
+  <li><b>A2520 / A3123</b>: Magic Keyboard with Touch ID and Numeric Keypad</li>
+  <li><b>A1644</b>: Magic Keyboard Compact (TKL)</li>
+  <li><b>A2449 / A2450 / A3122</b>: Magic Keyboard Compact with Touch ID</li>
+  <li><b>A1314</b>: Apple Wireless Keyboard (AA battery Bluetooth)</li>
+  <li><b>A1243</b>: Apple Keyboard with Numeric Keypad (Wired USB)</li>
+</ul>
+</details>
 
 ---
 
