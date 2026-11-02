@@ -1,6 +1,6 @@
 # =============================================================================
-# ui-qa-tester Session Configuration for MagicBridge
-# Repository: https://github.com/DooperDrew/magicbridge
+# GhostQA (ui-qa-tester) Session Configuration for MacKeys (MagicBridge)
+# Repository: https://github.com/DooperDrew/mackeys-win
 # =============================================================================
 
 session_name = "magicbridge-settings-qa"
@@ -28,7 +28,7 @@ destructive_control_regex = '(?i)\b(delete|format|factory\s*reset|erase|wipe|uni
 output_dir = "qa-reports/magicbridge"
 
 # Target GitHub repository for issue filing
-target_github_repo = "DooperDrew/magicbridge"
+target_github_repo = "DooperDrew/mackeys-win"
 
 # UI & report language ("en" or "it")
 locale = "en"

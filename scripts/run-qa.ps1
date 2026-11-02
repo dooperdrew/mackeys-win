@@ -57,14 +57,25 @@ $RepoRoot = if (Test-Path (Join-Path $ScriptDir "qa-session.template.toml")) {
 }
 Set-Location $RepoRoot
 
-# 1. Locate ui-qa-cli executable
-$CliFromPath = (Get-Command ui-qa-cli -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
-$CliExeFromPath = (Get-Command ui-qa-cli.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+# 1. Locate QA CLI executable (GhostQA / ui-qa-cli)
+$CliFromPath = (Get-Command ghost-qa-cli -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+if (-not $CliFromPath) {
+    $CliFromPath = (Get-Command ui-qa-cli -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+}
+$CliExeFromPath = (Get-Command ghost-qa-cli.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+if (-not $CliExeFromPath) {
+    $CliExeFromPath = (Get-Command ui-qa-cli.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+}
 
 $CandidatePaths = @(
     $CliFromPath,
     $CliExeFromPath,
+    (Join-Path $env:LOCALAPPDATA "Programs\ghost-qa\ghost-qa-cli.exe"),
+    (Join-Path $env:LOCALAPPDATA "Programs\ghost-qa\ui-qa-cli.exe"),
     (Join-Path $env:LOCALAPPDATA "Programs\ui-qa-tester\ui-qa-cli.exe"),
+    (Join-Path $RepoRoot "..\ghost-qa\target\release\ghost-qa-cli.exe"),
+    (Join-Path $RepoRoot "..\ghost-qa\target\release\ui-qa-cli.exe"),
+    (Join-Path $RepoRoot "..\ui_qa_tester\target\release\ghost-qa-cli.exe"),
     (Join-Path $RepoRoot "..\ui_qa_tester\target\release\ui-qa-cli.exe"),
     (Join-Path $RepoRoot "..\ui-qa-tester\target\release\ui-qa-cli.exe")
 )
